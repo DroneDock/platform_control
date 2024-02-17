@@ -3,7 +3,7 @@
 # Third Party Imports
 
 # Project Specific Imports
-from ..HardwareComponents.LinearActuator import LinearActuator
+from HardwareComponents.LinearActuator import LinearActuator
 
 
 # Pin Definition ---------------------------------------------------------------
