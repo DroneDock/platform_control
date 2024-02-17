@@ -6,7 +6,6 @@ adafruit-circuitpython-requests==2.0.5
 adafruit-circuitpython-typing==1.10.0
 Adafruit-PlatformDetect==3.60.0
 Adafruit-PureIO==1.1.11
--e git+https://github.com/DroneDock/platform_control.git@3ff9515b432ec3fa13ab214e5db709a56cbd72e5#egg=platform_control
 pyftdi==0.55.0
 pyserial==3.5
 pyusb==1.2.1
