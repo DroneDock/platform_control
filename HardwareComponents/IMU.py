@@ -7,12 +7,17 @@ import busio
 import adafruit_bno055
 
 class CustomIMU:
+    """
+    Establish an IMU class that can return acceleration, angular velocity,
+    temperature, quarternions, etc.
+
+    This is just a wrapper for the adafruit I2C library.
+    """
+    # Use V_in instead of 3V3
 
     def __init__(self):
-        # Initialize IMU connection
-        i2c = busio.I2C(board.SCL, board.SDA)
-        # Initialize the sensor
-        self._sensor = adafruit_bno055.BNO055_I2C(i2c)
+        i2c = busio.I2C(board.SCL, board.SDA)  # Initialize I2C connection
+        self._sensor = adafruit_bno055.BNO055_I2C(i2c)  # Initialize sensor
 
     def temperature(self) -> float:
         """
