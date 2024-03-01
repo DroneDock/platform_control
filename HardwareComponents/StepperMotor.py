@@ -17,9 +17,9 @@ class StepperMotor(object):
         GPIO.setmode(GPIO.BOARD)
 
         self.coilA1Pin = coilA1Pin
-        self.coilB2Pin = coilA2Pin
-        self.coilA2Pin = coilB1Pin
-        self.coilB1Pin = coilB2Pin
+        self.coilA2Pin = coilA2Pin
+        self.coilB1Pin = coilB1Pin
+        self.coilB2Pin = coilB2Pin
 
         # Configure Pins
         GPIO.setup(coilA1Pin, GPIO.OUT)

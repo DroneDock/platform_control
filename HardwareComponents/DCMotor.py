@@ -6,6 +6,12 @@ class  DCMotor(object):
     """
     DC motor class to control the motor.
 
+    Attributes
+    ----------
+
+
+    Methods
+    -------
 
     """
 
@@ -19,9 +25,8 @@ class  DCMotor(object):
             In2 (int): Second GPIO pin number (BCM) connected to H Bridge of 
             motor driver.
 
-            EN  (int): The pin number (BCM) connected to the PWM connection of 
-            the motor driver used to control motor speed.
-
+            EN  (int): The ENABLE pin number (BCM) connected to the PWM 
+            connection of the motor driver used to control motor speed.
         """
 
         # Configure Pins
@@ -62,6 +67,14 @@ class  DCMotor(object):
         GPIO.output(self._in1Pin, GPIO.HIGH)
         GPIO.output(self._in2Pin, GPIO.LOW)
         self._PWM.ChangeDutyCycle(dutyCycle)
+
+    def stop(self) -> None:
+        """
+        (Public) Stop the DC motor from rotating.
+        
+        Implementation: set the duty cycle to zero.
+        """
+        self._PWM.ChangeDutyCycle(0)
 
 
     def __del__(self):
