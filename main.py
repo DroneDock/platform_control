@@ -11,12 +11,12 @@ from multiprocessing import Queue
 
 # Project Specific Imports
 from HardwareComponents.LinearActuator import LinearActuator
-from HardwareComponents.IMU import CustomIMU
+from HardwareComponents.IMU import AdafruitBNO055
 
 
 def fetchEulerAngle(queue: Queue):
 
-    IMU = CustomIMU()
+    IMU = AdafruitBNO055()
 
     while True:
         # To prevent overfilling the queue

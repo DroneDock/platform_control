@@ -6,12 +6,14 @@ import board
 import busio
 import adafruit_bno055
 
-class CustomIMU:
+class AdafruitBNO055(object):
     """
-    Establish an IMU class that can return acceleration, angular velocity,
-    temperature, quarternions, etc.
+    Establish an IMU class for the 9-axis Adafruit BNO055 IMU, capable of 
+    returning 3-axis acceleration, 3-axis angular velocity, 3-axis magnetic
+    field and temperature, along with further derived values such as 
+    angles, quarternions, etc.
 
-    This is just a wrapper for the adafruit I2C library.
+    Dependencies: Adafruit I2C library, adafruit_bno055
     """
     # Use V_in instead of 3V3
 

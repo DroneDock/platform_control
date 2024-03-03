@@ -12,11 +12,11 @@ import RPi.GPIO as GPIO
 
 # Project-Specific Imports
 from HardwareComponents.DCMotor import DCMotor
-from HardwareComponents.IMU import CustomIMU
+from HardwareComponents.IMU import AdafruitBNO055
 
 # Initialize Objects ----------------------------------------------------------
 dcMotor = DCMotor(In1=17, In2=27, EN=18)
-IMU = CustomIMU()
+IMU = AdafruitBNO055()
 
 # Plotting --------------------------------------------------------------------
 t_data = []
@@ -27,7 +27,6 @@ line, = plt.plot([], [], 'r-')
 ax.set_xlim(0, 20)
 ax.set_ylim(-360, 360)
 ax.hold(True)
-
 
 try:
 

@@ -7,10 +7,10 @@ import board
 import busio
 import adafruit_bno055
 
-from HardwareComponents.IMU import CustomIMU
+from HardwareComponents.IMU import AdafruitBNO055
 
 ## ========================================================================== ##
-IMU = CustomIMU()
+IMU = AdafruitBNO055()
 
 # def temperature():
 #     last_val = 0xFFFF
