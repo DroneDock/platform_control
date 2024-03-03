@@ -1,50 +1,79 @@
+"""
+Limiting the motion of the arm to  +- 30 degrees
+"""
 # Standard Imports
 import time
 
 # Third Party Imports
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 import RPi.GPIO as GPIO
 
+# Project-Specific Imports
+from HardwareComponents.DCMotor import DCMotor
+from HardwareComponents.IMU import CustomIMU
 
-# Pin Definition ---------------------------------------------------------------
-Motor1In1 = 11
-Motor1In2 = 13
-Motor1EN  = 12   # PWM Pin on Raspberry PI
+# Initialize Objects ----------------------------------------------------------
+dcMotor = DCMotor(In1=17, In2=27, EN=18)
+IMU = CustomIMU()
 
-GPIO.setmode(GPIO.BOARD)
+# Plotting --------------------------------------------------------------------
+t_data = []
+angle_data = []
 
-GPIO.setup(Motor1In1, GPIO.OUT)
-GPIO.setup(Motor1In2, GPIO.OUT)
-GPIO.setup(Motor1EN, GPIO.OUT)
+fig, ax = plt.subplots()
+line, = plt.plot([], [], 'r-')
+ax.set_xlim(0, 20)
+ax.set_ylim(-360, 360)
+ax.hold(True)
 
-# Specify direction
-GPIO.output(Motor1In1, GPIO.HIGH)
-GPIO.output(Motor1In2, GPIO.LOW)
 
-# Setup PWM
-p = GPIO.PWM(Motor1EN, 2000)  # Set PWM frequency (in Hz)
+try:
 
-# Start PWM signals, specifying the duty cycle (in %)
-DutyCycle = 50
-p.start(DutyCycle)
+    # Make sure the angle is initially +-10
+    angle = IMU.eulerAngle(wrap=True)[0]
+    
+    while (angle > 10) and (angle < -10):
+        if (angle > 10):
+            dcMotor.clockwise(100)
+        elif (angle < -10):
+            dcMotor.anticlockwise(100)
+        else:
+            dcMotor.clockwise(100)
 
-while True:
+    # Main control algorithm
+    start_time = time.time()
 
-    key = input('Press W to increase duty cycle, press S to decrease: ')
+    while True:
+        try:
+            # Data Plotting
+            current_time = time.time() - start_time
+            yaw = IMU.eulerAngle(wrap=True)[0]  # Change subscript to match either roll pitch or yaw
 
-    match key:
-        case 'w':
-            if (DutyCycle < 100):
-                DutyCycle += 10
-        case 's':
-            if (DutyCycle > 0):
-                DutyCycle -= 10
-        case 'b':
+            t_data.append(current_time)
+            angle_data.append(yaw)
+
+
+    
+            # Control Algorithm
+            if (yaw < -30):
+                print("Rotating anticlockwise")
+                dcMotor.clockwise(100)
+            elif (yaw > 30):
+                print("Rotating clockwise")
+                dcMotor.anticlockwise(100)
+
+            print(yaw)
+
+            animation = FuncAnimation(fig, update, interval=100)
+
+        except KeyboardInterrupt:
             break
 
-    p.ChangeDutyCycle(DutyCycle)
-    print(f"The duty cycle is {DutyCycle}")
+        except:
+            print("No angle at this time")
 
-# Stop PWM
-p.stop()
-
-GPIO.cleanup()
+except KeyboardInterrupt:
+    dcMotor.stop()
+    print("Program terminated. Shutting down...")

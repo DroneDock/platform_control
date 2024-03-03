@@ -39,8 +39,18 @@ class CustomIMU:
         """
         return self._sensor.gyro
 
-    def eulerAngle(self) -> Tuple[float, float, float]:
+    def eulerAngle(self, wrap=False) -> Tuple[float, float, float]:
         """
-        Get the Euler angle from the IMU.
+        Get the Euler angle from the IMU as a tuple (yaw, roll, pitch)
+
+        If wrap = True, Wrap the angle to +-180 degree.
         """
-        return self._sensor.euler
+        yaw, roll, pitch = self._sensor.euler
+
+        # Wrap the angle from (0, 360) to (-180, 180)
+        if wrap:
+            if (yaw > 180): yaw -= 360
+
+        return (yaw, roll, pitch)
+
+    
