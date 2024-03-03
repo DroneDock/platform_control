@@ -15,7 +15,7 @@ from HardwareComponents.DCMotor import DCMotor
 from HardwareComponents.IMU import AdafruitBNO055
 
 # Initialize Objects ----------------------------------------------------------
-dcMotor = DCMotor(In1=17, In2=27, EN=18)
+dcMotor = DCMotor(In1=17, In2=27, EN=18)  # BCM mode
 IMU = AdafruitBNO055()
 
 # Plotting --------------------------------------------------------------------

@@ -13,6 +13,8 @@ class AdafruitBNO055(object):
     field and temperature, along with further derived values such as 
     angles, quarternions, etc.
 
+    The update rate of sensor is 100Hz. 
+
     Dependencies: Adafruit I2C library, adafruit_bno055
     """
     # Use V_in instead of 3V3

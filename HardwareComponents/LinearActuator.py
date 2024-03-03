@@ -8,12 +8,14 @@ class LinearActuator(object):
         """Initialize a Linear Actuator class used to control the motor.
 
         Args:
-            In1 (int): First GPIO pin number (BCM) connected to H Bridge of motor driver.
+            In1 (int): First GPIO pin number (BCM) connected to H Bridge of 
+            motor driver.
 
-            In2 (int): Second GPIO pin number (BCM) connected to H Bridge of motor driver.
+            In2 (int): Second GPIO pin number (BCM) connected to H Bridge of 
+            motor driver.
 
-            EN  (int): The pin number (BCM) connected to the PWM connection of the
-            motor driver used to control motor speed.
+            EN  (int): The ENABLE pin number (BCM) connected to the PWM connection of 
+            the motor driver used to control motor speed.
         """
 
         # Configure Pins
