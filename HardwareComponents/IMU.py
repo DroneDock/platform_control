@@ -1,7 +1,9 @@
 # Standard Imports
+import math
 from typing import Tuple
 
 # Third Party Imports
+import numpy as np
 import board
 import busio
 import adafruit_bno055
@@ -15,7 +17,8 @@ class AdafruitBNO055(object):
 
     The update rate of sensor is 100Hz. 
 
-    Dependencies: Adafruit I2C library, adafruit_bno055
+    Attributes
+    ----------
     """
     # Use V_in instead of 3V3
 
@@ -23,12 +26,14 @@ class AdafruitBNO055(object):
         i2c = busio.I2C(board.SCL, board.SDA)  # Initialize I2C connection
         self._sensor = adafruit_bno055.BNO055_I2C(i2c)  # Initialize sensor
 
+    @property
     def temperature(self) -> float:
         """
         Return the temperature measured by the IMU.
         """
         return self._sensor.temperature
 
+    @property
     def acceleration(self) -> Tuple[float, float, float]:
         """
         Return the 3-axis acceleration [m/s^2] measured by the IMU as a 
@@ -36,6 +41,7 @@ class AdafruitBNO055(object):
         """
         return self._sensor.acceleration
     
+    @property
     def angularVelocity(self) -> Tuple[float, float, float]:
         """
         Return the 3-axis angular velocity [m/s] measured by the IMU as a 
@@ -43,18 +49,51 @@ class AdafruitBNO055(object):
         """
         return self._sensor.gyro
 
-    def eulerAngle(self, wrap=False) -> Tuple[float, float, float]:
+    def euler(self, wrap=False) -> Tuple[float, float, float]:
         """
-        Get the Euler angle from the IMU as a tuple (yaw, roll, pitch)
+        Get the Euler angle straight from the IMU as a tuple (yaw, roll, pitch)
 
-        If wrap = True, Wrap the angle to +-180 degree.
+        Note: This is not used in favour of eulerAngles which calculate the
+        angles using quaternions.
         """
-        yaw, roll, pitch = self._sensor.euler
+        return self._sensor.euler
 
-        # Wrap the angle from (0, 360) to (-180, 180)
-        if wrap:
-            if (yaw > 180): yaw -= 360
+    def _quaternion_to_euler(self, qw, qx, qy, qz):
+        """
+        Convert quarternions to euler angles in radians as a tuple of
+        rotation around (x, y, z) axes.
+        """
+        x_rot_rad = math.atan2(2*(qw*qx+qy*qz), 1-2*(qx*qx+qy*qy))
+        y_rot_rad = 2*math.atan2(1+2*(qw*qy-qx*qz), 1-2*(qw*qy-qx*qz)) - math.pi/2
+        z_rot_rad = math.atan2(2*(qw*qz+qx*qy), 1-2*(qy*qy+qz*qz))
 
-        return (yaw, roll, pitch)
+        # Changes in signs for compensation (Yaw and pitch needs *-1)
+        # Roll is only limited to +- 90 deg
+        return x_rot_rad, y_rot_rad, z_rot_rad
 
-    
+    @property
+    def eulerAngles(self) -> Tuple[float, float, float]:
+        """
+        Returns a tuple of (yaw, roll, pitch) of the IMU in degrees, calculate
+        via quaternions to prevent gimbal lock.
+
+        Yaw   - Positive clockwise  [-180, +180]
+        Roll  - Positive right-down [- 90, + 90]
+        Pitch - Positive nose-up    [-180, +180]
+
+        This implementation is specific to the Adafruit BNO055 sensor, which
+        defines pitch, roll, yaw as the x, y and z axes rotations respectively.
+
+        Note: Move the IMU in a figure 8 pattern to calibrate the yaw in the 
+        magnetic north direction. 
+        """
+        # For the BNO055, the yaw, roll, pitch are the x, y and z axis 
+        # rotations respectively 
+        pitch, roll, yaw = self._quaternion_to_euler(*self._sensor.quaternion)
+        
+        # Some are multipled by -1 to make direction consistent
+        pitch = pitch * 180/math.pi * -1
+        roll  = roll  * 180/math.pi * -1
+        yaw   = yaw   * 180/math.pi * -1
+        
+        return yaw, roll, pitch
