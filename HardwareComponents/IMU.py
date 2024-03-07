@@ -26,6 +26,8 @@ class AdafruitBNO055(object):
         i2c = busio.I2C(board.SCL, board.SDA)  # Initialize I2C connection
         self._sensor = adafruit_bno055.BNO055_I2C(i2c)  # Initialize sensor
 
+        print("Ideally, move the sensor in a figure 8 pattern twice to calibrate it")
+
     @property
     def temperature(self) -> float:
         """
