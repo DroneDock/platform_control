@@ -19,10 +19,11 @@ while True:
 
     key = input('Press W to increase duty cycle, press S to decrease: ')
 
-    match key:
-        case 'w':
-            LinearMotor.extend(100)
-        case 's':
-            LinearMotor.retract(100)
-        case 'b':
-            break
+    if key == 'w':
+        LinearMotor.extend(100)
+    elif key == 's':
+        LinearMotor.retract(100)
+    elif key == 'b':
+        break
+
+print("Program terminated.")

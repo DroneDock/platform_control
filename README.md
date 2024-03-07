@@ -3,11 +3,13 @@ Code for Platform Control
 
 ## Setup
 ### Configuring Virtual Environment
-To setup the virtual environment neccessary for this project, namely the
-following modules:
+To setup the python environment for the Raspberry Pi Model 4 (main board for 
+this project), **python 3.9.2** is needed due to dependency limitations of the 
+ArUco detection code. Since the default python version for the Pi 4 is version
+3.11.2, we can change the environment with the **pyenv** program. The tutorial
+on how to use this is shown in [this youtube video](https://www.youtube.com/watch?v=QdlopCUuXxw&t=6s).
 
-* **Raspberry Pi GPIO** - Library to control GPIO pins for the raspberry pi
-* **Adafruit BNO055** - Library to control the specific IMU model
+The required packages are listed in *requirements.txt*.
 
 Run the following code:
 ```code
@@ -30,4 +32,3 @@ python main.py
 ```
 
 ## Additional Documentation
-

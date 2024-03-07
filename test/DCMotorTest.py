@@ -1,4 +1,13 @@
-"""Run this script to test DC Motor is working"""
+"""
+Run this script to test DC Motor is working
+
+Common Issues:
+
+Issue 1: Running the code the first time does not return an error, but DC motor
+does not operate as expected. Running the code again shows a warning about
+"channel being in use".
+Solution: Check that the motor driver is grounded to the Raspberry Pi.
+"""
 
 # Standard Imports
 import time
@@ -32,15 +41,14 @@ while True:
 
     key = input('Press W to increase duty cycle, press S to decrease: ')
 
-    match key:
-            case 'w':
-                if (DutyCycle < 100):
-                    DutyCycle += 10
-            case 's':
-                if (DutyCycle > 0):
-                    DutyCycle -= 10
-            case 'b':
-                break
+    if key == 'w':
+        if (DutyCycle < 100):
+            DutyCycle += 10
+    elif key == 's':
+        if (DutyCycle > 0):
+            DutyCycle -= 10
+    elif key == 'b':
+         break
 
     p.ChangeDutyCycle(DutyCycle)
     print(f"The duty cycle is {DutyCycle}")
