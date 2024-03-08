@@ -34,7 +34,7 @@ GPIO.output(Motor1In2, GPIO.LOW)
 p = GPIO.PWM(Motor1EN, 2000)  # Set PWM frequency (in Hz)
 
 # Start PWM signals, specifying the duty cycle (in %)
-DutyCycle = 50
+DutyCycle = 0
 p.start(DutyCycle)
 
 while True:
