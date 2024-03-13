@@ -20,7 +20,7 @@ Clockwise is extend
 Works once in a while but overheating issues as well.
 """
 #classify steps
-step = 50
+step = 200
 lead_screw_pitch = 2.0 #mm
 
 if __name__ == "__main__":
@@ -34,12 +34,12 @@ if __name__ == "__main__":
 
         if key == 'w':
             motor.step_clockwise(steps=step, sleep_time=0.001)
-            current_postion_mm = motor.get_current_position_mm(lead_screw_pitch)
-            print(current_postion_mm)
+            current_postion_mm = motor.get_current_position_mm(step, lead_screw_pitch)
+            print("'My current position is: ", current_postion_mm)
 
         elif key == 's':
             motor.step_anticlockwise(steps=step, sleep_time=0.001)
-            current_postion_mm = motor.get_current_position_mm(lead_screw_pitch)
+            current_postion_mm = motor.get_current_position_mm(step, lead_screw_pitch)
             print(current_postion_mm)
     
         elif key == 'b':
