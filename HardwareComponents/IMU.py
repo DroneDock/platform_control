@@ -17,10 +17,14 @@ class AdafruitBNO055(object):
 
     The update rate of sensor is 100Hz. 
 
+    V_in to 3.3V
+    SDA to GPIO 2
+    SCL to GPIO 3
+
     Attributes
     ----------
     """
-    # Use V_in instead of 3V3
+    # Use V_in instead of 3V3, 
 
     def __init__(self):
         i2c = busio.I2C(board.SCL, board.SDA)  # Initialize I2C connection
