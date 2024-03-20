@@ -4,15 +4,26 @@ import RPi.GPIO as GPIO
 
 from HardwareComponents.Steppermotor2 import StepperMotor
 """
+This is for lead screw
+Cable config: black to black
+green to yellow
+red to red
+blue to blue
 
 For reference: https://how2electronics.com/control-stepper-motor-with-a4988-driver-arduino/
 Motor driver position A4988
-2B: orange
-2A: blue
-1B: green
-1A: yellow
+2B: yellow
+2A: black
+1B: blue
+1A: red
 dir pin = GPIO 20 (int 38)
 step pin = GPIO 21 (int 40)
+
+
+Anticlockwise is retract
+Clockwise is extend
+
+Haven't tested with battery
 
 
 
@@ -23,10 +34,10 @@ Still need to reconfirm values. Not accurate
 """
 #classify steps
 
+#this values currently works
 lead_screw_pitch = 8 #mm
-
-time_sleep = 0.0009 #don't change this
-step = 1000
+time_sleep = 0.0005 #don't change this
+step = 400
 
 if __name__ == "__main__":
 
