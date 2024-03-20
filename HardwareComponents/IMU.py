@@ -23,6 +23,11 @@ class AdafruitBNO055(object):
     -----
     - The order of orientation is yaw, roll, pitch
     - The update rate of sensor is 100Hz.
+    The update rate of sensor is 100Hz. 
+
+    V_in to 3.3V
+    SDA to GPIO 2
+    SCL to GPIO 3
 
     Connections
     -----------
@@ -31,6 +36,7 @@ class AdafruitBNO055(object):
     3. SDA to GPIO 2
     4. SCL to GPIO 3
     """
+    # Use V_in instead of 3V3, 
     # Use V_in instead of 3V3, 
 
     def __init__(self, ADR: bool = False):
