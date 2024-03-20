@@ -3,7 +3,6 @@ import math
 from typing import Tuple
 
 # Third Party Imports
-import numpy as np
 import board
 import busio
 import adafruit_bno055
@@ -22,9 +21,18 @@ class AdafruitBNO055(object):
     """
     # Use V_in instead of 3V3
 
-    def __init__(self):
+    def __init__(self, ADR: bool = False):
+        """
+        Initialize the AdafruitBNO055 class. Set ADR to True if the ADR pin
+        of the BNO055 is set to HIGH (this must be done if a second BNO055 is 
+        used along with the first)
+        """
         i2c = busio.I2C(board.SCL, board.SDA)  # Initialize I2C connection
-        self._sensor = adafruit_bno055.BNO055_I2C(i2c)  # Initialize sensor
+        
+        if not ADR:  # Default address
+            self._sensor = adafruit_bno055.BNO055_I2C(i2c, address=0x28)
+        else:        # When ADR is set HIGH
+            self._sensor = adafruit_bno055.BNO055_I2C(i2c, address=0x29)
 
         print("Ideally, move the sensor in a figure 8 pattern twice to calibrate it")
 
