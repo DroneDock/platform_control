@@ -13,6 +13,7 @@ import RPi.GPIO as GPIO
 
 
 # Pin Definition using BCM numbering system -----------------------------------
+GPIO.cleanup()
 Motor1In1 = 17
 Motor1In2 = 27
 Motor1EN  = 18   # PWM Pin on Raspberry PI
@@ -42,23 +43,26 @@ Press b to stop
 
 while True:
 
-    key = input('Press W to go clockwise, press S to go anticlockwise: ')
+    try:
+        key = input('Press W to go clockwise, press S to go anticlockwise: ')
 
-    if key == 'w':
-        GPIO.output(Motor1In1, GPIO.HIGH)
-        GPIO.output(Motor1In2, GPIO.LOW)
-        print("Going clockwise")
-    elif key == 's':
-        GPIO.output(Motor1In1, GPIO.LOW)
-        GPIO.output(Motor1In2, GPIO.HIGH)
-        print("Going anticlockwise")
-    elif key == 'b':
-         break
+        if key == 'w':
+            GPIO.output(Motor1In1, GPIO.HIGH)
+            GPIO.output(Motor1In2, GPIO.LOW)
+            print("Going clockwise")
+        elif key == 's':
+            GPIO.output(Motor1In1, GPIO.LOW)
+            GPIO.output(Motor1In2, GPIO.HIGH)
+            print("Going anticlockwise")
+        elif key == 'b':
+            break
 
    # p.ChangeDutyCycle(DutyCycle)
    # print(f"The duty cycle is {DutyCycle}")
+    except KeyboardInterrupt:
 
-# Stop PWM
-p.stop()
+        # Stop PWM
+        p.stop()
+        GPIO.cleanup()
 
 GPIO.cleanup()
