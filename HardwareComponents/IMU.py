@@ -16,10 +16,14 @@ class AdafruitBNO055(object):
 
     The update rate of sensor is 100Hz. 
 
+    V_in to 3.3V
+    SDA to GPIO 2
+    SCL to GPIO 3
+
     Attributes
     ----------
     """
-    # Use V_in instead of 3V3
+    # Use V_in instead of 3V3, 
 
     def __init__(self, ADR: bool = False):
         """
@@ -73,13 +77,18 @@ class AdafruitBNO055(object):
         Convert quarternions to euler angles in radians as a tuple of
         rotation around (x, y, z) axes.
         """
-        x_rot_rad = math.atan2(2*(qw*qx+qy*qz), 1-2*(qx*qx+qy*qy))
-        y_rot_rad = 2*math.atan2(1+2*(qw*qy-qx*qz), 1-2*(qw*qy-qx*qz)) - math.pi/2
-        z_rot_rad = math.atan2(2*(qw*qz+qx*qy), 1-2*(qy*qy+qz*qz))
+        try:
+            x_rot_rad = math.atan2(2*(qw*qx+qy*qz), 1-2*(qx*qx+qy*qy))
+            y_rot_rad = 2*math.atan2(1+2*(qw*qy-qx*qz), 1-2*(qw*qy-qx*qz)) - math.pi/2
+            z_rot_rad = math.atan2(2*(qw*qz+qx*qy), 1-2*(qy*qy+qz*qz))
 
-        # Changes in signs for compensation (Yaw and pitch needs *-1)
-        # Roll is only limited to +- 90 deg
-        return x_rot_rad, y_rot_rad, z_rot_rad
+            # Changes in signs for compensation (Yaw and pitch needs *-1)
+            # Roll is only limited to +- 90 deg
+            return x_rot_rad, y_rot_rad, z_rot_rad
+        
+        # Type Error is returned when the sensor detects None
+        except TypeError:
+            return None, None, None
 
     @property
     def eulerAngles(self) -> Tuple[float, float, float]:
@@ -101,9 +110,13 @@ class AdafruitBNO055(object):
         # rotations respectively 
         pitch, roll, yaw = self._quaternion_to_euler(*self._sensor.quaternion)
         
-        # Some are multipled by -1 to make direction consistent
-        pitch = pitch * 180/math.pi * -1
-        roll  = roll  * 180/math.pi * -1
-        yaw   = yaw   * 180/math.pi * -1
-        
-        return yaw, roll, pitch
+        # Accounting for None values
+        if pitch and roll and yaw:
+
+            # Some are multipled by -1 to make direction consistent
+            pitch = pitch * 180/math.pi * -1
+            roll  = roll  * 180/math.pi * -1
+            yaw   = yaw   * 180/math.pi * -1
+            
+            return yaw, roll, pitch
+        return None, None, None
