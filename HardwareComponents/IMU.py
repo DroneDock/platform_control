@@ -14,14 +14,17 @@ class AdafruitBNO055(object):
     field and temperature, along with further derived values such as 
     angles, quarternions, etc.
 
-    The update rate of sensor is 100Hz. 
+    Notes
+    -----
+    - The order of orientation is yaw, roll, pitch
+    - The update rate of sensor is 100Hz.
 
-    V_in to 3.3V
-    SDA to GPIO 2
-    SCL to GPIO 3
-
-    Attributes
-    ----------
+    Connections
+    -----------
+    1. V_in to 3.3V
+    2. GND  to GROUND
+    3. SDA to GPIO 2
+    4. SCL to GPIO 3
     """
     # Use V_in instead of 3V3, 
 
