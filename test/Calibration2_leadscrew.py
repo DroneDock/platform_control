@@ -37,7 +37,9 @@ Still need to reconfirm values. Not accurate
 #this values currently works
 lead_screw_pitch = 8 #mm
 time_sleep = 0.0005 #don't change this
-step = 400
+
+#changet this
+step = 100
 
 if __name__ == "__main__":
 
