@@ -2,7 +2,7 @@
 Test Code for calibration, not running
 For getting the angles of IMU while DC motor is turning
 Not done yet
-
+Managed to get the graphs as shown...in Angle_graphs
 """
 import time
 import multiprocessing as mp
