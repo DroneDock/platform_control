@@ -2,7 +2,7 @@ import time
 
 import RPi.GPIO as GPIO
 
-from HardwareComponents.Steppermotor2 import StepperMotor
+from back.Leadscrew import StepperMotor
 """
 This is for lead screw
 Cable config: black to black
@@ -28,7 +28,7 @@ Clockwise is extend
 
 #this values currently works
 lead_screw_pitch = 8 #mm
-time_sleep = 0.0005 #don't change this
+time_sleep = 0.0005 #don't change this, for lead screw
 
 #changet this
 step = 100
@@ -39,25 +39,27 @@ if __name__ == "__main__":
     motor = StepperMotor()
     
     while True: 
+        try:
+            key = input('Press W to increase rotate clockwise , press S to rotate anticlockwise: ')
 
-        key = input('Press W to increase rotate clockwise , press S to rotate anticlockwise: ')
+            if key == 'w':
+                for i in range(50):
+                    motor.spin(sleep_time=time_sleep, clockwise=True)
+                    # current_postion_mm = motor.add_position_mm(input_step, lead_screw_pitch)
+                    # print("'My current position in mm is :", format(current_postion_mm,".2f"))
 
-        if key == 'w':
-            motor.spin(steps= step, sleep_time= time_sleep, clockwise=True)
-            #current_postion_mm = motor.add_position_mm(input_step, lead_screw_pitch)
-            #print("'My current position in mm is :", format(current_postion_mm,".2f"))
-            
-        elif key == 's':
-            motor.spin(steps=step, sleep_time= time_sleep, clockwise=False)
-            #current_postion_mm = motor.subtract_position_mm(input_step, lead_screw_pitch)
-            #print("'My current position in mm is :", format(current_postion_mm,".2f"))
+            elif key == 's':
+                for i in range(50):
+                    motor.spin(sleep_time=time_sleep, clockwise=False)
+                    # current_postion_mm = motor.subtract_position_mm(input_step, lead_screw_pitch)
+                    # print("'My current position in mm is :", format(current_postion_mm,".2f"))
 
-    
-        elif key == 'b':
-            break
         
-   
-      
-  
-    GPIO.cleanup()
+            elif key == 'b':
+                print("STOP")
+                GPIO.cleanup()
+                break
+        except KeyboardInterrupt:
+
+            GPIO.cleanup()
   

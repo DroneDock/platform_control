@@ -49,9 +49,9 @@ class StepperMotor(object):
 
     def stop(self) -> None:
             GPIO.output(self.pul_pin, GPIO.LOW)
-            time.sleep(sleep_time)  # Delay in seconds
-            GPIO.output(self.pul_pin, GPIO.LOW)
-            time.sleep(sleep_time)  # Delay in seconds
+            time.sleep(0.005)  # Delay in seconds
+            GPIO.output(self.pul_pin, GPIO.HIGH)
+            time.sleep(0.005)  # Delay in seconds
 
     # def spin(self, steps ,sleep_time,clockwise=True ):
 

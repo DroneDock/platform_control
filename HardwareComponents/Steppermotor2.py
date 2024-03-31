@@ -12,7 +12,7 @@ This is for Lead Screw.
 class StepperMotor(object):
     def __init__(self, steps_per_revolution = 200, dir_pin: int = 20, step_pin: int = 21):
         
-        GPIO.cleanup()
+        #GPIO.cleanup()
         
         self.dir_pin = dir_pin
         self.step_pin = step_pin
@@ -50,6 +50,13 @@ class StepperMotor(object):
             time.sleep(sleep_time)  # Delay in seconds
             GPIO.output(self.step_pin, GPIO.LOW)
             time.sleep(sleep_time)  # Delay in seconds
+
+    def stop(self):
+        GPIO.output(self.step_pin, GPIO.LOW)
+        time.sleep(0.005)  # Delay in seconds
+        GPIO.output(self.step_pin, GPIO.HIGH)
+        time.sleep(0.005)  # Delay in seconds
+
                 
             
            

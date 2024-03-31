@@ -58,7 +58,11 @@ if __name__ == "__main__":
 
     
         elif key == 'b':
+            motor.stop()
+            GPIO.cleanup()
+            print("STOP")
             break
+
         
    
       

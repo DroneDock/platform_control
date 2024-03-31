@@ -38,3 +38,7 @@ class StepperMotor(object):
         time.sleep(sleep_time)  # Delay in seconds
         GPIO.output(self.step_pin, GPIO.LOW)
         time.sleep(sleep_time)  # Delay in seconds
+
+    def stop(self):
+        # Spin motor by one step
+        pass

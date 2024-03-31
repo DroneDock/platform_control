@@ -78,7 +78,6 @@ def printDC(queue: Queue):
     while True:
         for _ in range(15):  # Assuming you want to run the motor 5 times            
             try:
-                print("ASDADADDADADAD")
                 p.start(DutyCycleUp)
                 GPIO.output(Motor1In1, GPIO.HIGH) # High
                 GPIO.output(Motor1In2, GPIO.LOW)

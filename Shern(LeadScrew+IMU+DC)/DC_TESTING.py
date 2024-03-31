@@ -15,9 +15,10 @@ motor = DCMotor(In1=17, In2=27, EN=18, Duty=100)
 
 # Perform operations with the motor
 
-motor.clockwise(0)   
+#Change directions here
+motor.clockwise(1)   
 
-motor.anticlockwise(1)# Bring up
+motor.anticlockwise(0)# Bring up
 
 
 # Or other operations as needed

@@ -57,16 +57,22 @@ def printEulerAngle(top_angle):
 def reach(bot_angle):
     DC_motor = DCMotor(In1=17, In2=27, EN=18, Duty=100)
     print ("The angle for DC is",bot_angle.value)
+    time.sleep(3)
     while True:
         try:
             if -90 <= bot_angle.value <= -70:
                 DC_motor.clockwise(0.5)   # Bring down
-                time.sleep(2)
                 DC_motor.anticlockwise(0.8) #Bring up
                 #Just moving, but will stop if limit reached
                 print ("Moving")
+                print ("Moving")
+                print ("Moving")
+                print ("Moving")
+                print ("Moving")
+                print ("Moving")
+                print ("Moving")
             else:
-                DC_motor.stop()
+                DC_motor.clockwise(0)
                 print("NotMoving")
                 pass
         
@@ -84,7 +90,8 @@ def spin():
             bottom_motor.spin(steps= step, sleep_time= time_sleep, clockwise=True)
             time.sleep(2)
             bottom_motor.spin(steps=step, sleep_time= time_sleep, clockwise=False)
-
+            time.sleep(2)
+            print("I am spinning")
         except KeyboardInterrupt:
             print ("CLeaning up GPIO pins")
             bottom_motor.stop()
@@ -98,20 +105,20 @@ if __name__ == "__main__":
 
     # Initiate processes
     fetchProcess = mp.Process(target=fetchEulerAngle, args=(top_angle,bot_angle))
-    printProcess = mp.Process(target=printEulerAngle, args=(top_angle,))
+    #printProcess = mp.Process(target=printEulerAngle, args=(top_angle,))
     DCProcess = mp.Process(target=reach, args=(bot_angle,))
     BotProcess = mp.Process(target=spin, args=())
     # Set processes as daemon which are automatically killed when the main
     # process ends, simplifying cleanup
     fetchProcess.daemon = True
-    printProcess.daemon = True
+    #printProcess.daemon = True
     DCProcess.daemon = True
     BotProcess.daemon = True
 
 
     # Start the processes
     fetchProcess.start()
-    printProcess.start()
+    #printProcess.start()
     DCProcess.start()
     BotProcess.start()
 
