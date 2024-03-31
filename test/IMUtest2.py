@@ -1,12 +1,4 @@
-<<<<<<< HEAD
 """Run this script to verify readings from the IMU"""
-=======
-"""
-Run this script to verify readings from the IMU
-
-This scripts takes in both IMU readings
-"""
->>>>>>> d6414c5 (28.03.24 Ken & Zheng Aun)
 
 # Standard Imports
 import time
@@ -26,8 +18,4 @@ if __name__ == '__main__':
         print(f"2nd IMU Angles (Yaw, Roll, Pitch): {IMU_2.eulerAngles}")
         print()
 
-<<<<<<< HEAD
         time.sleep(1)
-=======
-        time.sleep(1)
->>>>>>> d6414c5 (28.03.24 Ken & Zheng Aun)

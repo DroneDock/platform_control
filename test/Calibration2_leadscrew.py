@@ -23,14 +23,6 @@ step pin = GPIO 21 (int 40)
 Anticlockwise is retract
 Clockwise is extend
 
-Haven't tested with battery
-
-
-
-
-Still need to reconfirm values. Not accurate
-
-
 """
 #classify steps
 
