@@ -6,7 +6,7 @@ import time
 
 import RPi.GPIO as GPIO
 
-from HardwareComponents.BottomStepper import StepperMotor
+from back.BottomStepper import StepperMotor
 """
 
 For ref: https://www.instructables.com/Raspberry-Pi-Python-and-a-TB6600-Stepper-Motor-Dri/

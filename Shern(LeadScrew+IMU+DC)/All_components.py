@@ -18,7 +18,8 @@ import multiprocessing as mp
 from back.Leadscrew import StepperMotor
 from back.ShernIMU import AdafruitBNO055
 from back.DCMotor import DCMotor
-from HardwareComponents.BottomStepper import StepperMotor
+from back.BottomStepper import StepperMotor
+
 import RPi.GPIO as GPIO
 
 
