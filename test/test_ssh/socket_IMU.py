@@ -6,7 +6,7 @@ import socket
 import time
 
 # Project-Specific Imports
-from HardwareComponents.IMU import AdafruitBNO055
+from HardwareComponents.test.IMU import AdafruitBNO055
 
 # Read sensor
 IMU = AdafruitBNO055()
