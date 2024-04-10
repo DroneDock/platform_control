@@ -1,13 +1,14 @@
 """
-Latest change: Implemented ADR changes at _init_
+For importing IMU class
+Technically same as original, but some constraints are 
+added when error appears.
 """
-
-
 # Standard Imports
 import math
 from typing import Tuple
 
 # Third Party Imports
+import numpy as np
 import board
 import busio
 import adafruit_bno055
@@ -19,17 +20,14 @@ class AdafruitBNO055(object):
     field and temperature, along with further derived values such as 
     angles, quarternions, etc.
 
-    Notes
-    -----
-    - The order of orientation is yaw, roll, pitch
-    - The update rate of sensor is 100Hz.
+    The update rate of sensor is 100Hz. 
 
-    Connections
-    -----------
-    1. V_in to 3.3V
-    2. GND  to GROUND
-    3. SDA to GPIO 2
-    4. SCL to GPIO 3
+    V_in to 3.3V
+    SDA to GPIO 2
+    SCL to GPIO 3
+
+    Attributes
+    ----------
     """
     # Use V_in instead of 3V3, 
 
@@ -85,18 +83,16 @@ class AdafruitBNO055(object):
         Convert quarternions to euler angles in radians as a tuple of
         rotation around (x, y, z) axes.
         """
-        try:
-            x_rot_rad = math.atan2(2*(qw*qx+qy*qz), 1-2*(qx*qx+qy*qy))
-            y_rot_rad = 2*math.atan2(1+2*(qw*qy-qx*qz), 1-2*(qw*qy-qx*qz)) - math.pi/2
-            z_rot_rad = math.atan2(2*(qw*qz+qx*qy), 1-2*(qy*qy+qz*qz))
+        if qw is None or qx is None or qy is None or qz is None:
+            return None, None, None  # Return None if any quaternion component is None
 
-            # Changes in signs for compensation (Yaw and pitch needs *-1)
-            # Roll is only limited to +- 90 deg
-            return x_rot_rad, y_rot_rad, z_rot_rad
-        
-        # Type Error is returned when the sensor detects None
-        except TypeError:
-            return None, None, None
+        x_rot_rad = math.atan2(2*(qw*qx+qy*qz), 1-2*(qx*qx+qy*qy))
+        y_rot_rad = 2*math.atan2(1+2*(qw*qy-qx*qz), 1-2*(qw*qy-qx*qz)) - math.pi/2
+        z_rot_rad = math.atan2(2*(qw*qz+qx*qy), 1-2*(qy*qy+qz*qz))
+
+        # Changes in signs for compensation (Yaw and pitch needs *-1)
+        # Roll is only limited to +- 90 deg
+        return x_rot_rad, y_rot_rad, z_rot_rad
 
     @property
     def eulerAngles(self) -> Tuple[float, float, float]:
@@ -117,14 +113,12 @@ class AdafruitBNO055(object):
         # For the BNO055, the yaw, roll, pitch are the x, y and z axis 
         # rotations respectively 
         pitch, roll, yaw = self._quaternion_to_euler(*self._sensor.quaternion)
-        
-        # Accounting for None values
-        if pitch and roll and yaw:
+        if pitch is None or roll is None or yaw is None:
+            return None, None, None  # Return None if any quaternion component is None
 
-            # Some are multipled by -1 to make direction consistent
-            pitch = pitch * 180/math.pi * -1
-            roll  = roll  * 180/math.pi * -1
-            yaw   = yaw   * 180/math.pi * -1
-            
-            return yaw, roll, pitch
-        return None, None, None
+        # Some are multipled by -1 to make direction consistent
+        pitch = pitch * 180/math.pi * -1
+        roll  = roll  * 180/math.pi * -1
+        yaw   = yaw   * 180/math.pi * -1
+        
+        return yaw, roll, pitch

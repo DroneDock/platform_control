@@ -1,8 +1,14 @@
 """
-This script is to maunally calibrate the position of the keyhole. 
+Cable config:
+L298N motor driver
+Heat sink to your left.
+Black first then red 
 
-Config: DC motor not on your side 
-Stepper motor wire facing you
+
+W (clockwise is make platform tilt up)
+s (anticlockwise makes platform tilt down)
+
+
 """
 
 # Standard Imports
@@ -33,7 +39,8 @@ p = GPIO.PWM(Motor1EN, 2000)  # Set PWM frequency (in Hz)
 # Start PWM signals, specifying the duty cycle (in %)
 # Specify the DutyCycle (speed), max rate at 100
 DutyCycle = 100
-p.start(DutyCycle)
+p.stop()
+
 
 """
 Press W to go clockwise (down)
@@ -46,6 +53,7 @@ while True:
     try:
         key = input('Press W to go clockwise, press S to go anticlockwise: ')
 
+<<<<<<< HEAD
         if key == 'w':
             GPIO.output(Motor1In1, GPIO.HIGH)
             GPIO.output(Motor1In2, GPIO.LOW)
@@ -56,6 +64,20 @@ while True:
             print("Going anticlockwise")
         elif key == 'b':
             break
+=======
+    if key == 'w':
+        p.start(DutyCycle)
+        GPIO.output(Motor1In1, GPIO.HIGH)
+        GPIO.output(Motor1In2, GPIO.LOW)
+        print("Going clockwise")
+    elif key == 's':
+        p.start(DutyCycle)
+        GPIO.output(Motor1In1, GPIO.LOW)
+        GPIO.output(Motor1In2, GPIO.HIGH)
+        print("Going anticlockwise")
+    elif key == 'b':
+         break
+>>>>>>> d6414c5 (28.03.24 Ken & Zheng Aun)
 
    # p.ChangeDutyCycle(DutyCycle)
    # print(f"The duty cycle is {DutyCycle}")

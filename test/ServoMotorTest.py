@@ -30,11 +30,11 @@ try:
         time.sleep(1)
 
         # Move servo to 90 degrees
-        set_angle(90)
+        set_angle(120)
         time.sleep(1)
 
         # Move servo to 180 degrees
-        set_angle(180)
+        set_angle(0)
         time.sleep(1)
 
 except KeyboardInterrupt:

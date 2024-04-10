@@ -1,31 +1,40 @@
+"""
+Bottom stepper motor
+
+"""
 import time
 
 import RPi.GPIO as GPIO
 
-from HardwareComponents.Steppermotor2 import StepperMotor
+from HardwareComponents.BottomStepper import StepperMotor
 """
 
-For reference: https://how2electronics.com/control-stepper-motor-with-a4988-driver-arduino/
-Motor driver position A4988
-2B: orange
-2A: blue
-1B: green
-1A: yellow
-dir pin = GPIO 20 (int 38)
-step pin = GPIO 21 (int 40)
+For ref: https://www.instructables.com/Raspberry-Pi-Python-and-a-TB6600-Stepper-Motor-Dri/
+Motor driver position T6880
+B-: orange
+B+: blue
+A-: green
+A+: yellow
 
+!!!NOTE!!!
+Dir Pin set to GPIO20, duplicated with Lead Screw. We need to try with other pins (GPIO24)
 
+-ve dir: 20
+-ve ena: 16
+-ve pul:22
 
+Progress: Works fine.
+Microstepping: 8
 
-Still need to reconfirm values. Not accurate
-
+Next step is making it react to ArUco
+Ken.
 
 """
 #classify steps
 
-lead_screw_pitch = 8 #mm
 
-time_sleep = 0.0009 #don't change this
+
+time_sleep = 0.0005 #don't change this
 step = 1000
 
 if __name__ == "__main__":
