@@ -6,13 +6,13 @@ from HardwareComponents.Steppermotor2 import StepperMotor
 """
 This is for lead screw
 Cable config: black to black
-green to yellow
+green to green
 red to red
 blue to blue
 
 For reference: https://how2electronics.com/control-stepper-motor-with-a4988-driver-arduino/
 Motor driver position A4988
-2B: yellow
+2B: green
 2A: black
 1B: blue
 1A: red
