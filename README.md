@@ -1,5 +1,12 @@
 # platform_control
-Code for Platform Control
+Main code for the project.
+
+### Project Structure
+There are two main folders in this project:
+
+* 📁 **HardwareComponents** - Contain all the classes used to control the electronic components
+* 📁 **test** - Contain all the files that can be run standalone to test whether individual electronic components, such as those defined in 📁 HardwareComponents, work as intended. 
+
 
 ## Setup
 ### Configuring Virtual Environment
@@ -30,5 +37,3 @@ To run the program, simply run the following command in the project root:
 ```code
 python main.py
 ```
-
-## Additional Documentation
