@@ -1,4 +1,7 @@
-"""Run this script to verify readings from the IMU"""
+"""
+Run this script to verify readings from two IMUs. Ensure one of the IMUs
+have its ADR (address) pin set to HIGH.
+"""
 
 # Standard Imports
 import time
