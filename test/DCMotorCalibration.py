@@ -53,7 +53,6 @@ while True:
     try:
         key = input('Press W to go clockwise, press S to go anticlockwise: ')
 
-<<<<<<< HEAD
         if key == 'w':
             GPIO.output(Motor1In1, GPIO.HIGH)
             GPIO.output(Motor1In2, GPIO.LOW)
@@ -64,20 +63,6 @@ while True:
             print("Going anticlockwise")
         elif key == 'b':
             break
-=======
-    if key == 'w':
-        p.start(DutyCycle)
-        GPIO.output(Motor1In1, GPIO.HIGH)
-        GPIO.output(Motor1In2, GPIO.LOW)
-        print("Going clockwise")
-    elif key == 's':
-        p.start(DutyCycle)
-        GPIO.output(Motor1In1, GPIO.LOW)
-        GPIO.output(Motor1In2, GPIO.HIGH)
-        print("Going anticlockwise")
-    elif key == 'b':
-         break
->>>>>>> d6414c5 (28.03.24 Ken & Zheng Aun)
 
    # p.ChangeDutyCycle(DutyCycle)
    # print(f"The duty cycle is {DutyCycle}")
