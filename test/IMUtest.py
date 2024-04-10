@@ -1,4 +1,6 @@
-"""Run this script to verify readings from the IMU"""
+"""
+Run this script to verify readings from a single IMU
+"""
 
 # Standard Imports
 import time
@@ -13,7 +15,6 @@ if __name__ == '__main__':
     IMU = AdafruitBNO055()
 
     while True:
-        print(f"Temperature: {IMU.temperature} degrees C")
         print(f"Euler Angles (Yaw, roll, pitch) derived from quaternions: {IMU.eulerAngles}")
         print(f"Euler Angles (Yaw, roll, pitch) read from IMU : {IMU.euler()}")
         print()
