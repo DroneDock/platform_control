@@ -1,3 +1,8 @@
+"""
+DESCRIPTION
+----------
+Run this code to verify that ultrasonic sensor outputs correct reading.
+"""
 import RPi.GPIO as GPIO
 import time
 

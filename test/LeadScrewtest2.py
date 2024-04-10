@@ -2,7 +2,7 @@ import time
 
 import RPi.GPIO as GPIO
 
-from HardwareComponents.Steppermotor2 import StepperMotor
+from HardwareComponents.StepperMotor import LeadscrewStepperMotor
 """
 This is for lead screw
 Cable config: black to black
@@ -31,7 +31,7 @@ step = 400
 if __name__ == '__main__':
 
 
-    motor = StepperMotor()
+    motor = LeadscrewStepperMotor()
     
     #applies to current git config. Don't change sleep_time.
     

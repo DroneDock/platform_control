@@ -1,12 +1,7 @@
-"""Run this script to verify readings from the IMU"""
-
-
 """
 This scripts reads the IMU reading and stepper motor moves independently.
 Ken
 """
-
-
 # Standard Imports
 import time
 import RPi.GPIO as GPIO

@@ -1,5 +1,12 @@
-import RPi.GPIO as GPIO
+"""
+Run this code to test if servo motor rotates to designated angle
+"""
+# Standard Imports
 import time
+
+# Third-Party Imports
+import RPi.GPIO as GPIO
+
 
 # Set GPIO numbering mode
 GPIO.setmode(GPIO.BOARD)
@@ -37,7 +44,7 @@ try:
         set_angle(0)
         time.sleep(1)
 
+# Clean up GPIO on Ctrl+C exit
 except KeyboardInterrupt:
-    # Clean up GPIO on Ctrl+C exit
     pwm.stop()
     GPIO.cleanup()

@@ -1,13 +1,29 @@
-import RPi.GPIO as GPIO
+"""
+DESCRIPTION
+----------
+As of writing this code, the IMU was not ready so an ultrasonic sensor is used
+to verify that the Leadscrew can indeed react to changes.
+
+STATUS
+----------
+LEGACY
+"""
+
+# Standard Imports
 import time
-from HardwareComponents.Steppermotor2 import StepperMotor
+
+# Third-Party Imports
+import RPi.GPIO as GPIO
+
+# Project-Specific Imports
+from HardwareComponents.StepperMotor import LeadscrewStepperMotor
 
 # Define GPIO pins
 TRIG_PIN = 23  # GPIO pin for the ultrasonic sensor's trigger
 ECHO_PIN = 32  # GPIO pin for the ultrasonic sensor's echo
 
-lead_screw_pitch = 8 #mm
-time_sleep = 0.0005 #don't change this
+lead_screw_pitch = 8 # mm
+time_sleep = 0.0005 # Do not change this (gives the least vibrations)
 step = 10
 
 
@@ -20,6 +36,9 @@ def setup():
     GPIO.setup(ECHO_PIN, GPIO.IN)
 
 def get_distance():
+    """
+    Function to get the distance detected by the ultrasonic sensor.
+    """
     # Send a pulse to the ultrasonic sensor
     GPIO.output(TRIG_PIN, GPIO.HIGH)
     time.sleep(0.00001)
@@ -40,14 +59,13 @@ def get_distance():
     return distance
 
 
-
 def cleanup():
     # Cleanup GPIO
     GPIO.cleanup()
 
 if __name__ == '__main__':
 
-    motor = StepperMotor()
+    motor = LeadscrewStepperMotor()
 
     try:
         setup()
@@ -57,10 +75,8 @@ if __name__ == '__main__':
             distance = get_distance()
             print("Distance:", distance, "cm")
             #time.sleep(0.05)  # Wait for 1 second before taking the next measurement
-            
-            
 
-            if (30<= distance <= 60):
+            if (30 <= distance <= 60):
                 step_distance = int (step*(distance-30))
                 motor.spin(steps= step_distance, sleep_time= time_sleep, clockwise=True)
                 time.sleep(1)
@@ -68,7 +84,6 @@ if __name__ == '__main__':
                 step_distance = int (step*(30-distance))
                 motor.spin(steps=step_distance, sleep_time= time_sleep, clockwise=False)
                 time.sleep(1)
-            
 
     except KeyboardInterrupt:
         print("Program terminated by user")
