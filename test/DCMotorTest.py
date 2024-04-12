@@ -1,12 +1,16 @@
 """
-Cable config:
-L298N motor driver
-Heat sink to your left.
-Black first then red 
+Author: Ken
 
+Description:
+- Cable config for L298N motor driver: With heat sink positioned at the left 
+side, place the black wire to the left of the red wire.
 
-W (clockwise is make platform tilt up)
-s (anticlockwise makes platform tilt down)
+How to use:
+W (clockwise is make platform tilt up/ goes back)
+s (anticlockwise makes platform tilt down/ goes forward)
+
+Progress:
+This is working with the new soldering (April 12)
 """
 
 # Standard Imports
@@ -17,7 +21,6 @@ import RPi.GPIO as GPIO
 
 
 # Pin Definition using BCM numbering system -----------------------------------
-GPIO.cleanup()
 Motor1In1 = 17
 Motor1In2 = 27
 Motor1EN  = 18   # PWM Pin on Raspberry PI
@@ -37,8 +40,7 @@ p = GPIO.PWM(Motor1EN, 2000)  # Set PWM frequency (in Hz)
 # Start PWM signals, specifying the duty cycle (in %)
 # Specify the DutyCycle (speed), max rate at 100
 DutyCycle = 100
-p.stop()
-
+p.start(DutyCycle)
 
 """
 Press W to go clockwise (down)
@@ -51,15 +53,16 @@ while True:
     try:
         key = input('Press W to go clockwise, press S to go anticlockwise: ')
 
-        if key == 'w':
+        if key == 'w':  # Goes backwards
             GPIO.output(Motor1In1, GPIO.HIGH)
             GPIO.output(Motor1In2, GPIO.LOW)
             print("Going clockwise")
-        elif key == 's':
+        elif key == 's': # Goes forward
             GPIO.output(Motor1In1, GPIO.LOW)
             GPIO.output(Motor1In2, GPIO.HIGH)
             print("Going anticlockwise")
         elif key == 'b':
+            p.stop()
             break
 
    # p.ChangeDutyCycle(DutyCycle)
