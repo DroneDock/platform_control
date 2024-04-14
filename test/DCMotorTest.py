@@ -6,11 +6,11 @@ Description:
 side, place the black wire to the left of the red wire.
 
 How to use:
-W (clockwise is make platform tilt up/ goes back)
-s (anticlockwise makes platform tilt down/ goes forward)
+W to go forward for 1 second
+S to go backward for 1 second
 
 Progress:
-This is working with the new soldering (April 12)
+This is working with the new soldering (April 14)
 """
 
 # Standard Imports
@@ -40,7 +40,6 @@ p = GPIO.PWM(Motor1EN, 2000)  # Set PWM frequency (in Hz)
 # Start PWM signals, specifying the duty cycle (in %)
 # Specify the DutyCycle (speed), max rate at 100
 DutyCycle = 100
-p.start(DutyCycle)
 
 """
 Press W to go clockwise (down)
@@ -53,14 +52,22 @@ while True:
     try:
         key = input('Press W to go clockwise, press S to go anticlockwise: ')
 
-        if key == 'w':  # Goes backwards
-            GPIO.output(Motor1In1, GPIO.HIGH)
-            GPIO.output(Motor1In2, GPIO.LOW)
-            print("Going clockwise")
-        elif key == 's': # Goes forward
+        if key == 'w':  # Goes forward
             GPIO.output(Motor1In1, GPIO.LOW)
             GPIO.output(Motor1In2, GPIO.HIGH)
+            print("Going clockwise")
+            p.start(DutyCycle)
+            time.sleep(1)
+            p.stop()
+
+        elif key == 's': # Goes backwards
+            GPIO.output(Motor1In1, GPIO.HIGH)
+            GPIO.output(Motor1In2, GPIO.LOW)
             print("Going anticlockwise")
+            p.start(DutyCycle)
+            time.sleep(1)
+            p.stop()
+
         elif key == 'b':
             p.stop()
             break
