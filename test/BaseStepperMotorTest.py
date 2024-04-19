@@ -18,7 +18,7 @@ A-: green
 A+: black
 
 +ve dir, ena and pul need to connect to 3.3V of RPI
--ve dir: 20
+-ve dir: 24
 -ve ena: 23
 -ve pul: 25
 
@@ -34,7 +34,7 @@ step = 1000
 if __name__ == "__main__":
 
     #GPIO.setmode(GPIO.BCM)
-    motor = BaseStepperMotor(ena_pin=23, dir_pin=20, pul_pin=25)
+    motor = BaseStepperMotor(ena_pin=23, dir_pin=24, pul_pin=25)
     
     while True: 
 
