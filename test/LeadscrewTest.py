@@ -17,6 +17,7 @@ Motor driver position A4988
 dir pin = GPIO 20 (int 38)
 step pin = GPIO 21 (int 40)
 
+Description: The leadscrew will extend and retract for a designated amount of times.
 ISSUE: Once the program finished running, it will go into idle buzzing.
 """
 lead_screw_pitch = 8 # mm
@@ -32,7 +33,7 @@ if __name__ == '__main__':
     
 
     #runs it 10 times
-    for i in range (5):
+    for i in range (3):
         #retracts platform
         motor.spin(steps= step, sleep_time= time_sleep, clockwise=True)
 
