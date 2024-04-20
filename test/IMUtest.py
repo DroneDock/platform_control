@@ -1,4 +1,6 @@
-"""Run this script to verify readings from the IMU"""
+"""
+Run this script to verify readings from the IMU
+"""
 
 # Standard Imports
 import time

@@ -1,59 +1,46 @@
 """
-Run this script to test DC Motor is working
+Author: Gai Zhe
 
-Common Issues:
+Description:
+- Revamped DC Motor Test which utilizes the DC Motor class
+- Cable config for L298N motor driver: With heat sink positioned at the left 
+side, place the black wire to the left of the red wire.
 
-Issue 1: Running the code the first time does not return an error, but DC motor
-does not operate as expected. Running the code again shows a warning about
-"channel being in use".
-Solution: Check that the motor driver is grounded to the Raspberry Pi.
+How to use:
+W to go forward for 1 second
+S to go backward for 1 second
 """
 
 # Standard Imports
 import time
-
-# Third Party Imports
+# Third-Party Imports
 import RPi.GPIO as GPIO
+# Project-Specific Imports
+from HardwareComponents.DCMotor import DCMotor
 
-
-# Pin Definition using BCM numbering system -----------------------------------
-Motor1In1 = 17
-Motor1In2 = 27
-Motor1EN  = 18   # PWM Pin on Raspberry PI
+# Instantiate DC Motor object
 GPIO.setmode(GPIO.BCM)
-
-GPIO.setup(Motor1In1, GPIO.OUT)
-GPIO.setup(Motor1In2, GPIO.OUT)
-GPIO.setup(Motor1EN, GPIO.OUT)
-
-# Specify direction
-GPIO.output(Motor1In1, GPIO.HIGH)
-GPIO.output(Motor1In2, GPIO.LOW)
-
-# Setup PWM
-p = GPIO.PWM(Motor1EN, 2000)  # Set PWM frequency (in Hz)
-
-# Start PWM signals, specifying the duty cycle (in %)
-DutyCycle = 50
-p.start(DutyCycle)
+dcMotor = DCMotor(In1=17, In2=27, EN=18)
 
 while True:
 
-    key = input('Press W to increase duty cycle, press S to decrease: ')
+    try:
+        key = input('Press W to go clockwise, press S to go anticlockwise: ')
 
-    if key == 'w':
-        if (DutyCycle < 100):
-            DutyCycle += 10
-    elif key == 's':
-        if (DutyCycle > 0):
-            DutyCycle -= 10
-    elif key == 'b':
-         break
+        if key == 'w':  # Goes forward
+            dcMotor.forward(duration=1)
 
-    p.ChangeDutyCycle(DutyCycle)
-    print(f"The duty cycle is {DutyCycle}")
+        elif key == 's': # Goes backwards
+            dcMotor.backward(duration=1)
 
-# Stop PWM
-p.stop()
+        elif key == 'b':
+            dcMotor.stop()
+            break
+
+   # p.ChangeDutyCycle(DutyCycle)
+   # print(f"The duty cycle is {DutyCycle}")
+    except KeyboardInterrupt:
+        dcMotor.stop()
+        GPIO.cleanup()
 
 GPIO.cleanup()
