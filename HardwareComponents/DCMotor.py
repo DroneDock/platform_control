@@ -16,7 +16,7 @@ class  DCMotor(object):
     left of the red wire.
     """
 
-    def __init__(self, In1: int, In2: int, EN:int):
+    def __init__(self, In1: int = 17, In2: int = 27, EN: int = 18):
         """Initialize a DC Motor class used to control the motor.
 
         Args:

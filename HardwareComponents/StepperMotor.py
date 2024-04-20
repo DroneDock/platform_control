@@ -155,7 +155,7 @@ class StepperMotor(object):
 
 
 class BaseStepperMotor(object):
-    def __init__(self, ena_pin: int = 23, dir_pin: int = 20, pul_pin: int = 25):
+    def __init__(self, ena_pin: int = 23, dir_pin: int = 24, pul_pin: int = 25):
         """
         Initialize a BaseStepperMotor class used to control the stepper motor
         located at the base that controls yaw of the entire platform. The
