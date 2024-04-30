@@ -202,7 +202,7 @@ class BaseStepperMotor(object):
 class LeadscrewStepperMotor(object):
     def __init__(self, dir_pin: int = 20, step_pin: int = 21):
         """Initialize a stepper motor class used to control the leadscrew.
-        This assumes the leadscrew is connected to the RED motor driver.
+        This assumes the leadscrew is connected to the A4988 motor driver.
         """
         
         GPIO.cleanup()
@@ -225,3 +225,6 @@ class LeadscrewStepperMotor(object):
             time.sleep(sleep_time)  # Delay in seconds
             GPIO.output(self.step_pin, GPIO.LOW)
             time.sleep(sleep_time)  # Delay in seconds
+            
+    def __del__(self):
+        GPIO.cleanup()

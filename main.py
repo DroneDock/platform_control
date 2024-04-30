@@ -8,77 +8,162 @@ actuator extends or retracts to level the platform using readings from the IMU.
 import time
 import multiprocessing as mp
 from multiprocessing import Queue
+from pathlib import Path
+
+# Third-Party Imports
+import numpy as np
+import RPi.GPIO as GPIO
 
 # Project Specific Imports
-from HardwareComponents.LinearActuator import LinearActuator
+from HardwareComponents.Camera import RPiCamera
 from HardwareComponents.IMU import AdafruitBNO055
+from HardwareComponents.DCMotor import DCMotor
+from HardwareComponents.StepperMotor import BaseStepperMotor, LeadscrewStepperMotor
 
 
-def fetchEulerAngle(queue: Queue):
+# FUNCTION WRAPPERS FOR DIFFERENT PROCESSES -----------------------------------
 
-    IMU = AdafruitBNO055()
-
-    while True:
-        # To prevent overfilling the queue
-        if queue.qsize() < 50:
-            queue.put(IMU.eulerAngle()[2])
-        else:
-            print("Queue is full. Waiting...")
+def update_IMU_readings(yaw_deg, pitch_deg, arm_deg, stopEvent: mp.Event):
+    """
+    Designed for multiprocessing, update the input angles in place with most
+    recent IMU sensor readings.
+    """
+    top_IMU = AdafruitBNO055(ADR=True)
+    arm_IMU = AdafruitBNO055()
+    
+    while not stopEvent.is_set():
+        try: #TODO: update values individually so None for one value does not affect others
+            yaw_deg.value = top_IMU.eulerAngles[0]
+            pitch_deg.value = top_IMU.eulerAngles[1]
+            arm_deg.value = arm_IMU.eulerAngles[1]
+        except TypeError:
+            pass  # Skip update for one loop if sensor returns None
         
-        # Manual delay (to be removed later)
+        # print(f"Yaw: {yaw_deg.value}, Pitch: {pitch_deg.value}, Arm: {arm_deg.value}")
         time.sleep(0.05)
-
-def printEulerAngle(queue: Queue):
-
-    # Other modules use GPIO.setmode(BCM), so must go by BCM
-    LinAct = LinearActuator(In1=5, In2=6, EN=12)
-
-    while True:
-        if not queue.empty():
-            angle = queue.get()
-            print(f"The pitch angle is {angle}")
-
-            # Sometimes angle is None, so put in try block to resolve
-            try:
-                if (angle >= 0):
-                    print("EXTEND")
-                    LinAct.extend(100)
-                elif (angle <= 0):
-                    print("RETRACT")
-                    LinAct.retract(100)
-            except TypeError:
-                pass
+    
+    
+def update_camera_readings(delta_R, delta_theta, stopEvent: mp.Event):
+    """
+    Update camera readings into the R and theta variables in place.
+    """
+    
+    camera = RPiCamera(calibration_path=Path(__file__).parent / "arucoRPi/calibration.yaml")
+    
+    while not stopEvent.is_set():
+        camera.update_frame()
+        x, y, z = camera.estimate_coordinates(log=False)
         
+        print("Camera outputs are: ", x, y, z)
+        
+        # Guard clause: when no marker is detected
+        if z < 0:
+            delta_R.value = 0  # Signal DC motor to stop
+            print("No marker detected.")
+            continue
+        
+        y = -y  # 'estimate_coordinates' return y positive downwards, so recalibrate it with htis
+        
+        r = np.sqrt(x**2 + y**2)
+        theta = np.arctan2(y, x)
+        
+        # When angle is lower than zero, the marker is located at third or fourth
+        # quadrant, so a retraction is required.
+        if theta < 0:
+            delta_R.value = -r
+        delta_theta.value = theta
+        
+        print(delta_R.value)
+        print(delta_theta.value)
+
+
+# def move_arm(stopEvent: mp.Event):
+    
+#     dcMotor = DCMotor(In1=17, In2=27, EN=18)
+    
+#     time.sleep(5)
+    
+#     while not stopEvent.is_set():
+#         dcMotor.forward(duration=0.5)
+#         dcMotor.backward(duration=0.5)  # FOR THE SAME 
+        
+#     dcMotor.stop()
+#     GPIO.cleanup()
+    
+
+# Only track radius changes for now
+def track_marker(delta_R, delta_theta, stopEvent: mp.Event):
+    
+    dcMotor = DCMotor(In1=17, In2=27, EN=18)
+    time.sleep(5)
+    
+    while not stopEvent.is_set():
+        if delta_R > 0:  # Require extension
+            dcMotor.forward(duration=0.1)
+        elif delta_R < 0:  # Require retraction
+            dcMotor.backward(duration=0.1)
+        else:  # Stop the motor (happens when no marker detected)
+            dcMotor.stop()
+
+    dcMotor.stop()
+    GPIO.cleanup()
+        
+def balance_platform(pitch: mp.Value, stopEvent: mp.Event):
+    
+    Leadscrew = LeadscrewStepperMotor(dir_pin=20, step_pin=21)
+    
+    time.sleep(5)
+    
+    time_sleep = 0.0005 #don't change this
+    steps = 30
+    
+    while not stopEvent.is_set():
+        if pitch.value >=0:
+            Leadscrew.spin(steps=steps, sleep_time=time_sleep, clockwise=False)  # Extends to increase pitch
         else:
-            print("Waiting for data")
-            LinAct.extend(0)
+            Leadscrew.spin(steps=steps, sleep_time=time_sleep, clockwise=True)  # Retracts to reduce pitch
+        time.sleep(0.1)
 
-        # Manual delay (to be removed later)
-        time.sleep(0.05)
+    GPIO.cleanup()
+    
 
-
+# MAIN CODE -------------------------------------------------------------------
 if __name__ == "__main__":
 
-    # Initial Setup
-    dataQueue = Queue()
+    # ===== Initial Setup =====
+    yaw = mp.Value('f', 0.0)    # Store yaw angle of platform
+    pitch = mp.Value('f', 0.0)  # Store the pitch angle of platform (for balancing purposes)
+    alpha = mp.Value('f', 0.0)  # Store the arm angle
+    delta_R = mp.Value('f', 0.0)  # Radial difference between centre of camera and marker
+    delta_theta = mp.Value('f', 0.0)  # Yaw difference between centre of camera and marker
+    
+    # Global Stop Event
+    stopEvent = mp.Event()
 
-    # Initiate processes
-    fetchProcess = mp.Process(target=fetchEulerAngle, args=(dataQueue,))
-    printProcess = mp.Process(target=printEulerAngle, args=(dataQueue,))
-
-    # Set processes as daemon which are automatically killed when the main
-    # process ends, simplifying cleanup
-    fetchProcess.daemon = True
-    printProcess.daemon = True
+    # ===== Initiate processes =====
+    processes = [
+        mp.Process(target=update_IMU_readings, args=(yaw, pitch, alpha, stopEvent)),
+        mp.Process(target=update_camera_readings, args=(delta_R, delta_theta, stopEvent)),
+        # mp.Process(target=move_arm, args=(stopEvent,)),
+        mp.Process(target=track_marker, args=(delta_R, delta_theta, stopEvent)),
+        mp.Process(target=balance_platform, args=(pitch, stopEvent))
+    ]
 
     # Start the processes
-    fetchProcess.start()
-    printProcess.start()
+    for p in processes:
+        p.start()
 
     # Wait indefinitely until program is terminated
     try:
         while True:
-            time.sleep(1)
+            time.sleep(0.1)
 
-    except KeyboardInterrupt:
-        print("Program has terminated")
+    except KeyboardInterrupt:       
+        print("Initializing stop event")
+
+    # Ensure process resources are cleaned up
+    finally:
+        stopEvent.set() 
+        for p in processes:
+            p.join()
+        print("Program has ended gracefully.")
