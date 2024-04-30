@@ -10,7 +10,7 @@ blue to blue
 
 For reference: https://how2electronics.com/control-stepper-motor-with-a4988-driver-arduino/
 Motor driver position A4988
-2B: yellow
+2B: green
 2A: black
 1B: blue
 1A: red
@@ -21,8 +21,8 @@ Description: The leadscrew will extend and retract for a designated amount of ti
 ISSUE: Once the program finished running, it will go into idle buzzing.
 """
 lead_screw_pitch = 8 # mm
-time_sleep = 0.0005 #don't change this
-step = 400
+time_sleep = 0.0005 #don't change this (For full stepping, use 0.0004 - 0.0007s)
+step = 200
 
 if __name__ == '__main__':
 
@@ -32,21 +32,18 @@ if __name__ == '__main__':
     #applies to current git config. Don't change sleep_time.
     
 
-    #runs it 10 times
-    for i in range (3):
+    # Runs it 3 times
+    for i in range (1):
         #retracts platform
         motor.spin(steps= step, sleep_time= time_sleep, clockwise=True)
 
         #current_postion_mm = motor.add_position_mm(step,lead_screw_pitch)
         #print("Extension is ",current_postion_mm)
         time.sleep(0.7)
-        """
-        The issue is the code doesn't keep running, it ends there
-        """
     
         #extends platform
         motor.spin(steps=step, sleep_time= time_sleep, clockwise=False)
 
         time.sleep(0.7)
 
-    GPIO.cleanup()
+    GPIO.cleanup() 

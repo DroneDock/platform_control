@@ -27,7 +27,7 @@ log_file_path = Path(__file__).parent.parent / 'logs/IMU_readings.log'
 logging.basicConfig(filename=log_file_path, 
                     filemode='w', 
                     datefmt='%d-%b-%y %H:%M:%S',
-                    format='%(asctime)s - %(name)s - %(message)s',
+                    format='%(asctime)s.%(msecs)03d - %(name)s - %(message)s',
                     level=logging.INFO)
 
 # Processes -------------------------------------------------------------------
@@ -53,9 +53,10 @@ if __name__ == '__main__':
     ArmMotor = DCMotor(In1=17, In2=27, EN=18)
     # Leadscrew = LeadscrewStepperMotor(dir_pin=20, step_pin=21)
     
-    # Create loggers for each component
-    logger_IMU_1 = logging.getLogger('IMU_1')
-    logger_IMU_2 = logging.getLogger('IMU_2')
+    # Create loggers for each reading
+    logger_yaw = logging.getLogger('Yaw Angle')
+    logger_pitch = logging.getLogger('Pitch Angle')
+    logger_arm = logging.getLogger('Arm Angle')
     
     # Global array storing the pressed keyboard values
     shared_keys = mp.Array('i', [0]*4)
@@ -71,6 +72,7 @@ if __name__ == '__main__':
             
             # Get the IMU values
             pitch = IMU_top.eulerAngles[2]
+            yaw = IMU_top.eulerAngles[0]
             alpha = IMU_arm.eulerAngles[1]
             
             # Movement logic
@@ -87,8 +89,9 @@ if __name__ == '__main__':
             ArmMotor.stop()
             
             # Logging
-            logger_IMU_1.info(pitch)
-            logger_IMU_2.info(alpha)
+            logger_yaw.info(yaw)
+            logger_pitch.info(pitch)
+            logger_arm.info(alpha)
             
     except KeyboardInterrupt:
         logging.error("Program terminated via keyboard.")
