@@ -21,8 +21,8 @@ Description: The leadscrew will extend and retract for a designated amount of ti
 ISSUE: Once the program finished running, it will go into idle buzzing.
 """
 lead_screw_pitch = 8 # mm
-time_sleep = 0.0005 #don't change this (For full stepping, use 0.0004 - 0.0007s)
-step = 200
+time_sleep = 0.0006 #don't change this (For full stepping, use 0.0004 - 0.0007s)
+step = 500
 
 if __name__ == '__main__':
 
@@ -34,16 +34,15 @@ if __name__ == '__main__':
 
     # Runs it 3 times
     for i in range (2):
-        # Extend platform
-        motor.spin(steps= step, sleep_time= time_sleep, clockwise=True)
-
-        #current_postion_mm = motor.add_position_mm(step,lead_screw_pitch)
-        #print("Extension is ",current_postion_mm)
-        time.sleep(0.7)
-    
+        
         # Retract platform
-        # motor.spin(steps=step, sleep_time= time_sleep, clockwise=False)
-
+        motor.spin(steps=step, sleep_time= time_sleep, clockwise=False)
+        time.sleep(0.7)
+        
+        # Extend platform
+        # motor.spin(steps= step, sleep_time= time_sleep, clockwise=True)
         # time.sleep(0.7)
+    
+ 
 
     GPIO.cleanup()

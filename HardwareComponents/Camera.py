@@ -182,7 +182,7 @@ class RPiCamera(object):
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2, cv2.LINE_AA)
             # Save image as timestamp
             timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S%f")
-            cv2.imwrite(str(Path(__file__).parent / f"captured_image_t{timestamp}.png"), image)
+            cv2.imwrite(str(save_path), image)
         
         return x, y, z
 

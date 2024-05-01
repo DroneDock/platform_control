@@ -84,36 +84,36 @@ def update_camera_readings(delta_R, delta_theta, stopEvent: mp.Event):
         print(f'Camera code executed in {duration} seconds')
 
 
-# def move_arm(stopEvent: mp.Event):
-    
-#     dcMotor = DCMotor(In1=17, In2=27, EN=18)
-    
-#     time.sleep(5)
-    
-#     while not stopEvent.is_set():
-#         dcMotor.forward(duration=0.5)
-#         dcMotor.backward(duration=0.5)  # FOR THE SAME 
-        
-#     dcMotor.stop()
-#     GPIO.cleanup()
-    
-
-# Only track radius changes for now
-def track_marker(delta_R, delta_theta, stopEvent: mp.Event):
+def move_arm(stopEvent: mp.Event):
     
     dcMotor = DCMotor(In1=17, In2=27, EN=18)
+    
     time.sleep(5)
     
     while not stopEvent.is_set():
-        if delta_R > 0:  # Require extension
-            dcMotor.forward(duration=0.1)
-        elif delta_R < 0:  # Require retraction
-            dcMotor.backward(duration=0.1)
-        else:  # Stop the motor (happens when no marker detected)
-            dcMotor.stop()
-
+        dcMotor.forward(duration=1.5)
+        dcMotor.backward(duration=1.8)  # FOR THE SAME 
+        
     dcMotor.stop()
     GPIO.cleanup()
+    
+
+# # Only track radius changes for now
+# def track_marker(delta_R, delta_theta, stopEvent: mp.Event):
+    
+#     dcMotor = DCMotor(In1=17, In2=27, EN=18)
+#     time.sleep(5)
+    
+#     while not stopEvent.is_set():
+#         if delta_R > 0:  # Require extension
+#             dcMotor.forward(duration=0.1)
+#         elif delta_R < 0:  # Require retraction
+#             dcMotor.backward(duration=0.1)
+#         else:  # Stop the motor (happens when no marker detected)
+#             dcMotor.stop()
+
+#     dcMotor.stop()
+#     GPIO.cleanup()
         
 def balance_platform(pitch: mp.Value, stopEvent: mp.Event):
     
@@ -121,15 +121,17 @@ def balance_platform(pitch: mp.Value, stopEvent: mp.Event):
     
     time.sleep(5)
     
-    time_sleep = 0.0005 #don't change this
-    steps = 30
+    time_sleep = 0.0006 #don't change this
+    # steps = 1
     
     while not stopEvent.is_set():
-        if pitch.value >=0:
-            Leadscrew.spin(steps=steps, sleep_time=time_sleep, clockwise=False)  # Extends to increase pitch
-        else:
-            Leadscrew.spin(steps=steps, sleep_time=time_sleep, clockwise=True)  # Retracts to reduce pitch
-        time.sleep(0.1)
+        if pitch.value >= 2:
+            Leadscrew.single_spin(sleep_time=time_sleep, clockwise=False)
+            # Leadscrew.spin(steps=steps, sleep_time=time_sleep, clockwise=False)  # Retracts to reduce pitch
+        elif pitch.value <= -2:
+            Leadscrew.single_spin(sleep_time=time_sleep, clockwise=True)
+            # Leadscrew.spin(steps=steps, sleep_time=time_sleep, clockwise=True)  # Extends to increase pitch
+        # time.sleep(time_sleep)
 
     GPIO.cleanup()
     
@@ -151,8 +153,8 @@ if __name__ == "__main__":
     processes = [
         mp.Process(target=update_IMU_readings, args=(yaw, pitch, alpha, stopEvent)),
         mp.Process(target=update_camera_readings, args=(delta_R, delta_theta, stopEvent)),
-        # mp.Process(target=move_arm, args=(stopEvent,)),
-        mp.Process(target=track_marker, args=(delta_R, delta_theta, stopEvent)),
+        mp.Process(target=move_arm, args=(stopEvent,)),
+        # mp.Process(target=track_marker, args=(delta_R, delta_theta, stopEvent)),
         mp.Process(target=balance_platform, args=(pitch, stopEvent))
     ]
 

@@ -7,34 +7,22 @@ import time
 
 import RPi.GPIO as GPIO
 
-from HardwareComponents.StepperMotor import BaseStepperMotor
+from HardwareComponents.StepperMotor import BaseStepperMotor, LeadscrewStepperMotor
 """
-
-For ref: https://www.instructables.com/Raspberry-Pi-Python-and-a-TB6600-Stepper-Motor-Dri/
-Motor driver position T6880
-B-: red
-B+: blue
-A-: green
-A+: black
-
-+ve dir, ena and pul need to connect to 3.3V of RPI
--ve dir: 24
--ve ena: 23
--ve pul: 25
-
-Progress: Works fine.
-Microstepping: 8
-
-Next step is making it react to ArUco
 """
 #classify steps
-time_sleep = 0.0004 #don't change this
-step = 5000
+# Base stepper
+time_sleep = 0.0005 #don't change this
+step = 500
+
+# Leadscrew
+
 
 if __name__ == "__main__":
 
     #GPIO.setmode(GPIO.BCM)
-    motor = BaseStepperMotor(ena_pin=23, dir_pin=24, pul_pin=25)
+    base_motor = BaseStepperMotor(ena_pin=23, dir_pin=24, pul_pin=25)
+    leadscrew = LeadscrewStepperMotor(dir_pin=20, step_pin=21)
     
     while True: 
 
