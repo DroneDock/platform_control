@@ -44,6 +44,14 @@ class RPiCamera(object):
         self.distCof = np.array(distCof)
         print("Loaded calibration data successfully")
         
+        # Initialize video writer
+        output_folder = Path(__file__).parent.parent / "logs/videos/pose_estimation.avi"
+        fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+        self.output = cv2.VideoWriter(str(output_folder.resolve()), 
+                                      fourcc, 
+                                      10,   # Frame Rate
+                                      (640, 480))
+        
         self.frame = PiRGBArray(self.cam, size=self.cam.resolution)  # Array to store RGB arrays of a single frame, updated with capture 
         
         time.sleep(2)  # For startup
@@ -70,50 +78,64 @@ class RPiCamera(object):
             - No marker is detected
             - More than one markers are detected
         """
+        self.frame.truncate(0)
+        self.frame.seek(0)
         
         for frame in self.cam.capture_continuous(self.frame, format="bgr", use_video_port=True):
-            image = frame.array
-            gray_frame = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            
-            (corners, ids, rejected) = cv2.aruco.detectMarkers(image=gray_frame,
-                                                dictionary=self.arucoDict,
-                                                parameters=self.arucoParams)
-            
-            # If none or more than one arUco marker is detected, return -1
-            if not corners or ids.size > 1:
-                print("None/More than 1 marker(s) detected!")
-                x, y, z = -1
-                        
-            # Perform pose estimation
-            rVec, tVec, _ = cv2.aruco.estimatePoseSingleMarkers(
-                corners=corners, 
-                markerLength=self.MARKER_SIZE,
-                cameraMatrix=self.camMatrix,
-                distCoeffs=self.distCof
-            )
-            
-            x, y, z = tVec.flatten()
-            
-            # Save as a series of images
-            if log:
+            try: 
+                
+                image = frame.array
+                gray_frame = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+                
+                (corners, ids, rejected) = cv2.aruco.detectMarkers(image=gray_frame,
+                                                    dictionary=self.arucoDict,
+                                                    parameters=self.arucoParams)
+                
+                # If none or more than one arUco marker is detected, return -1
+                if not corners or ids.size > 1:
+                    print("None/More than 1 marker(s) detected!")
+                    x, y, z = (-1, -1, -1)
+                    self.frame.truncate(0)
+                    self.frame.seek(0)
+                    continue
+                            
+                # Perform pose estimation
+                rVec, tVec, _ = cv2.aruco.estimatePoseSingleMarkers(
+                    corners=corners, 
+                    markerLength=self.MARKER_SIZE,
+                    cameraMatrix=self.camMatrix,
+                    distCoeffs=self.distCof
+                )
                 print(rVec)
                 print(tVec)
-                topLeft, topRight, btmRight, btmLeft = corners.reshape((4, 2))
                 
-                # Draw lines on marker for visualisation
-                cv2.polylines(image, [corners.astype(np.int32)], isClosed=True,
-                              color=(0, 255, 255), thickness=3, 
-                              lineType=cv2.LINE_AA)
-                # Annotate Pose
-                cv2.drawFrameAxes(image, self.camMatrix, self.disCof, 
-                                  rVec, tVec, length=50, thickness=3)
-                # Annotate with coordinates
-                text = f"x = {np.round(x, 2)}, y = {np.round(y, 2)}, z = {np.round(z, 2)}"
-                cv2.putText(image, text, (10, image.shape[0] - 10), 
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2, cv2.LINE_AA)
-                # Save image as timestamp
-                timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S%f")
-                cv2.imwrite(f"frames/frame_{timestamp}.png", image)
+                x, y, z = tVec.flatten()
+                
+                # Save as a series of images
+                if log:
+                    
+                    # Draw lines on marker for visualisation
+                    cv2.polylines(image, [corners[0].astype(np.int32)], isClosed=True,
+                                color=(0, 255, 255), thickness=3, 
+                                lineType=cv2.LINE_AA)
+                    # Annotate Pose
+                    cv2.drawFrameAxes(image, self.camMatrix, self.distCof, 
+                                    rVec, tVec, length=50, thickness=3)
+                    # Annotate with coordinates
+                    text = f"x = {np.round(x, 2)}, y = {np.round(y, 2)}, z = {np.round(z, 2)}"
+                    cv2.putText(image, text, (10, image.shape[0] - 10), 
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2, cv2.LINE_AA)
+                    # Save image with a timestamp in its name
+                    timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S%f")
+                    cv2.imwrite(f"frames/frame_{timestamp}.png", image)
+                    self.output.write(image)
+                    
+                    self.frame.truncate(0)
+
+            except KeyboardInterrupt:
+                self.output.release()
+            finally:
+                self.output.release()
                 
             return x, y, z
             
@@ -183,8 +205,9 @@ if __name__ == '__main__':
     
     while True:
         try:
-            camera.update_frame()
-            x, y, z = camera.estimate_coordinates()
+            x, y, z = camera.capture_continuous()
+            # camera.update_frame()
+            # x, y, z = camera.estimate_coordinates()
         except KeyboardInterrupt:
             print("Terminated")
             

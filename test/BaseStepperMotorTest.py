@@ -29,7 +29,7 @@ Next step is making it react to ArUco
 """
 #classify steps
 time_sleep = 0.0005 #don't change this
-step = 1000
+step = 500
 
 if __name__ == "__main__":
 

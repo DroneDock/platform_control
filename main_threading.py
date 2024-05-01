@@ -6,8 +6,7 @@ actuator extends or retracts to level the platform using readings from the IMU.
 
 # Standard Imports
 import time
-import multiprocessing as mp
-from multiprocessing import Queue
+import threading
 from pathlib import Path
 
 # Third-Party Imports
@@ -22,7 +21,7 @@ from HardwareComponents.StepperMotor import BaseStepperMotor, LeadscrewStepperMo
 from utility.decorators import time_this_func
 
 # FUNCTION WRAPPERS FOR DIFFERENT PROCESSES -----------------------------------
-def update_IMU_readings(yaw_deg, pitch_deg, arm_deg, stopEvent: mp.Event):
+def update_IMU_readings(stopEvent: threading.Event):
     """
     Designed for multiprocessing, update the input angles in place with most
     recent IMU sensor readings.
@@ -32,9 +31,9 @@ def update_IMU_readings(yaw_deg, pitch_deg, arm_deg, stopEvent: mp.Event):
     
     while not stopEvent.is_set():
         try: #TODO: update values individually so None for one value does not affect others
-            yaw_deg.value = top_IMU.eulerAngles[0]
-            pitch_deg.value = top_IMU.eulerAngles[1]
-            arm_deg.value = arm_IMU.eulerAngles[1]
+            yaw = top_IMU.eulerAngles[0]
+            pitch = top_IMU.eulerAngles[1]
+            alpha = arm_IMU.eulerAngles[1]
         except TypeError:
             pass  # Skip update for one loop if sensor returns None
         
@@ -42,7 +41,7 @@ def update_IMU_readings(yaw_deg, pitch_deg, arm_deg, stopEvent: mp.Event):
         time.sleep(0.05)
     
     
-def update_camera_readings(delta_R, delta_theta, stopEvent: mp.Event):
+def update_camera_readings(stopEvent: threading.Event):
     """
     Update camera readings into the R and theta variables in place.
     """
@@ -58,7 +57,7 @@ def update_camera_readings(delta_R, delta_theta, stopEvent: mp.Event):
         
         # Guard clause: when no marker is detected
         if z < 0:
-            delta_R.value = 0  # Signal DC motor to stop
+            delta_R = 0  # Signal DC motor to stop
             print("No marker detected.")
             end_time = time.time()
             duration = end_time - start_time
@@ -73,18 +72,18 @@ def update_camera_readings(delta_R, delta_theta, stopEvent: mp.Event):
         # When angle is lower than zero, the marker is located at third or fourth
         # quadrant, so a retraction is required.
         if theta < 0:
-            delta_R.value = -r
-        delta_theta.value = theta
+            delta_R = -r
+        delta_theta = theta
         
-        print(delta_R.value)
-        print(delta_theta.value)
+        print(delta_R)
+        print(delta_theta)
         
         end_time = time.time()
         duration = end_time - start_time
         print(f'Camera code executed in {duration} seconds')
 
 
-# def move_arm(stopEvent: mp.Event):
+# def move_arm(stopEvent: threading.Event):
     
 #     dcMotor = DCMotor(In1=17, In2=27, EN=18)
     
@@ -99,7 +98,7 @@ def update_camera_readings(delta_R, delta_theta, stopEvent: mp.Event):
     
 
 # Only track radius changes for now
-def track_marker(delta_R, delta_theta, stopEvent: mp.Event):
+def track_marker(stopEvent: threading.Event):
     
     dcMotor = DCMotor(In1=17, In2=27, EN=18)
     time.sleep(5)
@@ -115,7 +114,7 @@ def track_marker(delta_R, delta_theta, stopEvent: mp.Event):
     dcMotor.stop()
     GPIO.cleanup()
         
-def balance_platform(pitch: mp.Value, stopEvent: mp.Event):
+def balance_platform(stopEvent: threading.Event):
     
     Leadscrew = LeadscrewStepperMotor(dir_pin=20, step_pin=21)
     
@@ -125,7 +124,7 @@ def balance_platform(pitch: mp.Value, stopEvent: mp.Event):
     steps = 30
     
     while not stopEvent.is_set():
-        if pitch.value >=0:
+        if pitch >=0:
             Leadscrew.spin(steps=steps, sleep_time=time_sleep, clockwise=False)  # Extends to increase pitch
         else:
             Leadscrew.spin(steps=steps, sleep_time=time_sleep, clockwise=True)  # Retracts to reduce pitch
@@ -138,27 +137,27 @@ def balance_platform(pitch: mp.Value, stopEvent: mp.Event):
 if __name__ == "__main__":
 
     # ===== Initial Setup =====
-    yaw = mp.Value('f', 0.0)    # Store yaw angle of platform
-    pitch = mp.Value('f', 0.0)  # Store the pitch angle of platform (for balancing purposes)
-    alpha = mp.Value('f', 0.0)  # Store the arm angle
-    delta_R = mp.Value('f', 0.0)  # Radial difference between centre of camera and marker
-    delta_theta = mp.Value('f', 0.0)  # Yaw difference between centre of camera and marker
+    yaw = 0.0    # Store yaw angle of platform
+    pitch = 0.0  # Store the pitch angle of platform (for balancing purposes)
+    alpha = 0.0  # Store the arm angle
+    delta_R = 0.0  # Radial difference between centre of camera and marker
+    delta_theta = 0.0  # Yaw difference between centre of camera and marker
     
     # Global Stop Event
-    stopEvent = mp.Event()
+    stopEvent = threading.Event()
 
     # ===== Initiate processes =====
-    processes = [
-        mp.Process(target=update_IMU_readings, args=(yaw, pitch, alpha, stopEvent)),
-        mp.Process(target=update_camera_readings, args=(delta_R, delta_theta, stopEvent)),
-        # mp.Process(target=move_arm, args=(stopEvent,)),
-        mp.Process(target=track_marker, args=(delta_R, delta_theta, stopEvent)),
-        mp.Process(target=balance_platform, args=(pitch, stopEvent))
+    threads = [
+        threading.Thread(target=update_IMU_readings, args=(stopEvent,)),
+        threading.Thread(target=update_camera_readings, args=(stopEvent,)),
+        # threading.Process(target=move_arm, args=(stopEvent,)),
+        threading.Thread(target=track_marker, args=(stopEvent,)),
+        threading.Thread(target=balance_platform, args=(stopEvent,))
     ]
 
     # Start the processes
-    for p in processes:
-        p.start()
+    for t in threads:
+        t.start()
 
     # Wait indefinitely until program is terminated
     try:
@@ -171,6 +170,6 @@ if __name__ == "__main__":
     # Ensure process resources are cleaned up
     finally:
         stopEvent.set() 
-        for p in processes:
-            p.join()
+        for t in threads:
+            t.join()
         print("Program has ended gracefully.")

@@ -33,17 +33,17 @@ if __name__ == '__main__':
     
 
     # Runs it 3 times
-    for i in range (1):
-        #retracts platform
+    for i in range (2):
+        # Extend platform
         motor.spin(steps= step, sleep_time= time_sleep, clockwise=True)
 
         #current_postion_mm = motor.add_position_mm(step,lead_screw_pitch)
         #print("Extension is ",current_postion_mm)
         time.sleep(0.7)
     
-        #extends platform
-        motor.spin(steps=step, sleep_time= time_sleep, clockwise=False)
+        # Retract platform
+        # motor.spin(steps=step, sleep_time= time_sleep, clockwise=False)
 
-        time.sleep(0.7)
+        # time.sleep(0.7)
 
-    GPIO.cleanup() 
+    GPIO.cleanup()
