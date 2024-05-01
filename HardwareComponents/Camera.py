@@ -205,9 +205,9 @@ if __name__ == '__main__':
     
     while True:
         try:
-            x, y, z = camera.capture_continuous()
-            # camera.update_frame()
-            # x, y, z = camera.estimate_coordinates()
+            # x, y, z = camera.capture_continuous()
+            camera.update_frame()
+            x, y, z = camera.estimate_coordinates()
         except KeyboardInterrupt:
             print("Terminated")
             
