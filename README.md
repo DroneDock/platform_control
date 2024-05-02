@@ -11,19 +11,28 @@ The main folders of the project are shown
 |       |----- Relay.py
 |       |----- IMU.py
 |       |----- StepperMotor.py
+|
 |----- 📁 test
 |       |----- BaseStepperMotorTest.py
 |       |----- DCMotorTest.py
 |       |----- ...
 |
+|----- 📁 demo
+|       |----- platform_levelling.py
+|       |----- aruco_tracking.py
+|       |----- turn_all_components.py
+|
 |----- 📁 utilities
-        |----- decorators.py
-        |----- path_management.py
+|       |----- decorators.py
+|       |----- path_management.py
+|
 |----- 📁 logs
 ```
 
 * 📁 **HardwareComponents** - Contain all the classes used to control the electronic components
 * 📁 **test** - Contain all the files that can be run standalone to test whether individual electronic components, such as those defined in 📁 HardwareComponents, work as intended. These are short programs useful for testing electrical connections. 
+* 📁 **demo** - Similar to test but instead of testing individual components, this folder contains scripts which
+combine multiple components working in tandem to achieve higher-level functionalities such as platform levelling.
 * 📁 **utilities** - Contain general tools (constants, functions and classes) to aid development, e.g, a file named `path_management.py` contains paths to the project root that can be referenced by other scripts.
 * 📁 **logs** - Contain all the logs and any collected data during run time.
 

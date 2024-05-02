@@ -141,6 +141,8 @@ class RPiCamera(object):
                 
             return x, y, z
             
+    
+    # Original Code
     def estimate_coordinates(self, log: bool = True, save_dir: Path = LOGS_DIR / "captured_images"):
         """
         Return the coordinates of ArUco marker (if any) relative to the centre
@@ -175,7 +177,7 @@ class RPiCamera(object):
         x, y, z = tVec.flatten()
         
         # Save as a video
-        if log: 
+        if log:
             # Draw lines on marker for visualisation
             cv2.polylines(image, [corners[0].astype(np.int32)], isClosed=True,
                             color=(0, 255, 255), thickness=3, 
@@ -187,18 +189,95 @@ class RPiCamera(object):
             text = f"x = {np.round(x, 2)}, y = {np.round(y, 2)}, z = {np.round(z, 2)}"
             cv2.putText(image, text, (10, image.shape[0] - 10), 
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2, cv2.LINE_AA)
+            
             # Save the video named after its timestamp
             timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S%f")
             cv2.imwrite(str(save_dir / f"captured_image_t{timestamp}.png"), image)
-        
+
         return x, y, z
 
+
+
+    # Edited Code
+    def estimate_coordinates(self, log: bool = True, save_dir: Path = LOGS_DIR / "captured_videos"):
+        """
+        Return the coordinates of ArUco marker (if any) relative to the centre
+        of the frame. Return (-1, -1, -1) if no markers are detected.
         
+        If `log` is set to true, save each frame as an image named after its 
+        timestamp under the directory `save_dir`.
+        """
+
+        # Link to the videos folder
+        video_path = save_dir / f"video_{datetime.datetime.now().strftime('%Y%m%d-%H%M%S')}.avi"
+        result = None
+
+        image = self.frame.array
+        gray_frame = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        (corners, ids, rejected) = cv2.aruco.detectMarkers(image=gray_frame,
+                                            dictionary=self.arucoDict,
+                                            parameters=self.arucoParams)
+
+        # If none or more than one arUco marker is detected, return -1
+        if not corners or (ids is not None and ids.size > 1):
+            if not corners:
+                print("No marker detected")
+            else:
+                print("More than one marker detected")
+            self._clear_frame_buffer()
+            return (-1, -1, -1)
+                    
+        # Perform pose estimation
+        rVec, tVec, _ = cv2.aruco.estimatePoseSingleMarkers(
+            corners=corners, 
+            markerLength=self.MARKER_SIZE,
+            cameraMatrix=self.camMatrix,
+            distCoeffs=self.distCof
+        )
+        
+        x, y, z = tVec.flatten()
+        
+        # Save as a video
+        if log:
+
+            # Define the codec and create a VideoWriter object
+            fourcc = cv2.VideoWriter_fourcc(*'XVID')
+            result = cv2.VideoWriter(str(video_path), fourcc, 20.0, (image.shape[1], image.shape[0]))      # 20s frame rate
+
+        try:
+            # Draw lines on marker for visualisation
+            cv2.polylines(image, [corners[0].astype(np.int32)], isClosed=True,
+                            color=(0, 255, 255), thickness=3, 
+                            lineType=cv2.LINE_AA)
+            # Annotate Pose
+            cv2.drawFrameAxes(image, self.camMatrix, self.distCof, 
+                                rVec, tVec, length=50, thickness=3)
+            # Annotate with coordinates
+            text = f"x = {np.round(x, 2)}, y = {np.round(y, 2)}, z = {np.round(z, 2)}"
+            cv2.putText(image, text, (10, image.shape[0] - 10), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2, cv2.LINE_AA)
+            
+            # # Save the video named after its timestamp
+            # timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S%f")
+            # cv2.imwrite(str(save_dir / f"captured_image_t{timestamp}.png"), image)
+
+            if result:
+                result.write(image)
+        
+        except Exception as e:
+            print(f"Error occurred: {e}")
+
+        finally:
+            if result:
+                result.release()
+
+        return x, y, z
+
+
     def __del__(self):
         self.cam.close()
                         
 
-    
 if __name__ == '__main__':
         
     calibration_path = Path(PROJECT_ROOT_PATH, "arucoRPi/calibration.yaml").resolve()

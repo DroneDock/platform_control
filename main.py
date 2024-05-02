@@ -20,6 +20,7 @@ from HardwareComponents.IMU import AdafruitBNO055
 from HardwareComponents.DCMotor import DCMotor
 from HardwareComponents.StepperMotor import BaseStepperMotor, LeadscrewStepperMotor
 from utilities.decorators import time_this_func
+from test.plotIMU import LoggerManager #Logger 
 
 # FUNCTION WRAPPERS FOR DIFFERENT PROCESSES -----------------------------------
 def update_IMU_readings(yaw_deg, pitch_deg, arm_deg, stopEvent: mp.Event):
@@ -27,6 +28,9 @@ def update_IMU_readings(yaw_deg, pitch_deg, arm_deg, stopEvent: mp.Event):
     Designed for multiprocessing, update the input angles in place with most
     recent IMU sensor readings.
     """
+    #File name to log data
+    log_file_path = Path(__file__).parent / 'logs/test1.log'
+
     top_IMU = AdafruitBNO055(ADR=True)
     arm_IMU = AdafruitBNO055()
     
