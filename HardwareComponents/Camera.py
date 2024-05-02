@@ -81,8 +81,7 @@ class RPiCamera(object):
             - More than one markers are detected
         """
         
-        self.frame.truncate(0)
-        self.frame.seek(0)
+        self._clear_frame_buffer()
         
         for frame in self.cam.capture_continuous(self.frame, format="bgr", use_video_port=True):
             try: 
@@ -162,8 +161,7 @@ class RPiCamera(object):
                 print("No marker detected")
             else:
                 print("More than one marker detected")
-            self.frame.truncate(0)
-            self.frame.seek(0)
+            self._clear_frame_buffer()
             return (-1, -1, -1)
                     
         # Perform pose estimation
@@ -176,7 +174,7 @@ class RPiCamera(object):
         
         x, y, z = tVec.flatten()
         
-        # Save as a series of images
+        # Save as a video
         if log: 
             # Draw lines on marker for visualisation
             cv2.polylines(image, [corners[0].astype(np.int32)], isClosed=True,
@@ -189,7 +187,7 @@ class RPiCamera(object):
             text = f"x = {np.round(x, 2)}, y = {np.round(y, 2)}, z = {np.round(z, 2)}"
             cv2.putText(image, text, (10, image.shape[0] - 10), 
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2, cv2.LINE_AA)
-            # Save image with a timestamp in its name
+            # Save the video named after its timestamp
             timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S%f")
             cv2.imwrite(str(save_dir / f"captured_image_t{timestamp}.png"), image)
         
