@@ -7,15 +7,36 @@ import numpy as np
 import RPi.GPIO as GPIO
 # Project-Specific Imports
 from utilities.path_management import PROJECT_ROOT_PATH, LOGS_DIR
+from HardwareComponents.IMU import AdafruitBNO055
 from HardwareComponents.Camera import RPiCamera
 from HardwareComponents.DCMotor import DCMotor
-from HardwareComponents.StepperMotor import BaseStepperMotor
+from HardwareComponents.StepperMotor import BaseStepperMotor, LeadscrewStepperMotor
 
 # CONFIG CONSTANTS ------------------------------------------------------------
 CAMERA_OFFSET_THRESHOLD = 5  # [cm] the threshold within which the offset is deemed acceptable hence stop tracking
 
 
 # Threads ---------------------------------------------------------------------
+def update_IMU_readings(yaw_deg, pitch_deg, arm_deg, stopEvent: mp.Event):
+    """
+    Designed for multiprocessing, update the input angles in place with most
+    recent IMU sensor readings.
+    """
+    top_IMU = AdafruitBNO055(ADR=True)
+    arm_IMU = AdafruitBNO055()
+
+    while not stopEvent.is_set():
+        try: #TODO: update values individually so None for one value does not affect others
+            yaw_deg.value = top_IMU.eulerAngles[0]
+            pitch_deg.value = top_IMU.eulerAngles[1]
+            arm_deg.value = arm_IMU.eulerAngles[1]
+
+        except TypeError:
+            pass  # Skip update for one loop if sensor returns None
+        
+        # print(f"Yaw: {yaw_deg.value}, Pitch: {pitch_deg.value}, Arm: {arm_deg.value}")
+        time.sleep(0.05)
+
 def update_camera_readings(delta_x: mp.Value, delta_y: mp.Value, stopEvent: mp.Event):
     """
     Update camera readings into the R and theta variables in place.
@@ -46,9 +67,10 @@ def marker_tracking(delta_x: mp.Value, delta_y: mp.Value, stopEvent: mp.Event):
     Actuate DC motors and base stepper motor to track the aruco marker based on
     the camera readings provided b thread `update_camera_readings`
     """    
-    GPIO.setmode(GPIO.BCM)
-    dcMotor = DCMotor()
+    dcMotor = DCMotor(In1=17, In2=27, EN=18)
     baseMotor = BaseStepperMotor()
+    
+    time.sleep(5)
     
     while not stopEvent.is_set():
         
@@ -57,27 +79,47 @@ def marker_tracking(delta_x: mp.Value, delta_y: mp.Value, stopEvent: mp.Event):
         # Adjust base stepper to correct x (If delta_x is +ve, turn clockwise)
         if delta_x.value > CAMERA_OFFSET_THRESHOLD:
             print("----- Stepper Motor ----- : Turning clockwise")
-            baseMotor.spin(10, sleep_time=0.0005, clockwise=True)
+            baseMotor.spin(100, sleep_time=0.0005, clockwise=True)
         elif delta_x.value < (-1 * CAMERA_OFFSET_THRESHOLD):
             print("----- Stepper Motor ----- : Turning anticlockwise")
-            baseMotor.spin(10, sleep_time=0.0005, clockwise=False)
+            baseMotor.spin(100, sleep_time=0.0005, clockwise=False)
         else:
             print("----- Stepper Motor ----- : Stop")
             
         # Adjust DC motor to correct y (If delta_y is +ve, extend)
         if delta_y.value > CAMERA_OFFSET_THRESHOLD:
             print("----- DC Motor ----- : Going forward")
-            dcMotor.forward()
+            dcMotor.forward(duration=0.5)
         elif delta_y.value < (-1 * CAMERA_OFFSET_THRESHOLD):
             print("----- DC Motor ----- : Going backwards")
-            dcMotor.backward()
+            dcMotor.backward(duration=0.5)
         else:
             print("----- DC Motor ----- : Stop")
             dcMotor.stop()
             
         time.sleep(0.5)
             
-    # dcMotor.stop()
+    dcMotor.stop()
+
+
+def balance_platform(pitch: mp.Value, stopEvent: mp.Event):
+    
+    Leadscrew = LeadscrewStepperMotor(dir_pin=20, step_pin=21)
+    
+    time.sleep(5)
+    
+    time_sleep = 0.0006 # This has been proved to be consistent
+    # steps = 1
+    
+    while not stopEvent.is_set():
+        if pitch.value >= 2:  # Retracts
+            Leadscrew.single_spin(sleep_time=time_sleep, clockwise=False)
+            # Leadscrew.spin(steps=steps, sleep_time=time_sleep, clockwise=False)  # Retracts to reduce pitch
+        elif pitch.value <= -2:  # Extends
+            Leadscrew.single_spin(sleep_time=time_sleep, clockwise=True)
+            # Leadscrew.spin(steps=steps, sleep_time=time_sleep, clockwise=True)  # Extends to increase pitch
+        # time.sleep(time_sleep)
+
     GPIO.cleanup()
 
 
@@ -98,8 +140,10 @@ if __name__ == '__main__':
     
     # ===== Initiate processses =====
     processes = [
+        mp.Process(target=update_IMU_readings, args=(yaw, pitch, alpha, stopEvent,)),
         mp.Process(target=update_camera_readings, args=(delta_x, delta_y, stopEvent,)),
-        mp.Process(target=marker_tracking, args=(delta_x, delta_y, stopEvent,))
+        mp.Process(target=marker_tracking, args=(delta_x, delta_y, stopEvent,)),
+        mp.Process(target=balance_platform, args=(pitch, stopEvent,))
     ]
     
     for p in processes:

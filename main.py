@@ -160,14 +160,14 @@ if __name__ == "__main__":
 
     # Global Stop Event
     stopEvent = mp.Event()
-    something = 2
+
     # ===== Initiate processes =====
     processes = [
         mp.Process(target=update_IMU_readings, args=(yaw, pitch, alpha, stopEvent)),
         mp.Process(target=update_camera_readings, args=(delta_R, delta_theta, stopEvent)),
-        #mp.Process(target=move_arm, args=(stopEvent,)),
+        mp.Process(target=move_arm, args=(stopEvent,)),
         #mp.Process(target=track_marker, args=(delta_R, delta_theta, stopEvent)),
-        #mp.Process(target=balance_platform, args=(pitch, stopEvent)),
+        mp.Process(target=balance_platform, args=(pitch, stopEvent)),
     ]
 
     # Start the processes

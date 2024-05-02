@@ -162,9 +162,7 @@ class BaseStepperMotor(object):
         implementation of this class assumes the stepper motor is connected to
         the TB6600 motor driver.
         """
-        
-        GPIO.cleanup()  # For a clean slate
-        
+            
         self.ena_pin = ena_pin  # Enable Pin
         self.dir_pin = dir_pin  # Direction Pin
         self.pul_pin = pul_pin  # Pulse Pin
