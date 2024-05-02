@@ -226,5 +226,16 @@ class LeadscrewStepperMotor(object):
             GPIO.output(self.step_pin, GPIO.LOW)
             time.sleep(sleep_time)  # Delay in seconds
             
+    def single_spin(self, sleep_time, clockwise=True):
+
+        # Set motor direction
+        GPIO.output(self.dir_pin, GPIO.HIGH if clockwise else GPIO.LOW)
+
+        # Spin motor by one step
+        GPIO.output(self.step_pin, GPIO.HIGH)
+        time.sleep(sleep_time)  # Delay in seconds
+        GPIO.output(self.step_pin, GPIO.LOW)
+        time.sleep(sleep_time)  # Delay in seconds
+            
     def __del__(self):
         GPIO.cleanup()

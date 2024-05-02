@@ -19,10 +19,9 @@ from HardwareComponents.Camera import RPiCamera
 from HardwareComponents.IMU import AdafruitBNO055
 from HardwareComponents.DCMotor import DCMotor
 from HardwareComponents.StepperMotor import BaseStepperMotor, LeadscrewStepperMotor
-
+from utility.decorators import time_this_func
 
 # FUNCTION WRAPPERS FOR DIFFERENT PROCESSES -----------------------------------
-
 def update_IMU_readings(yaw_deg, pitch_deg, arm_deg, stopEvent: mp.Event):
     """
     Designed for multiprocessing, update the input angles in place with most
@@ -51,6 +50,7 @@ def update_camera_readings(delta_R, delta_theta, stopEvent: mp.Event):
     camera = RPiCamera(calibration_path=Path(__file__).parent / "arucoRPi/calibration.yaml")
     
     while not stopEvent.is_set():
+        start_time = time.time()
         camera.update_frame()
         x, y, z = camera.estimate_coordinates(log=False)
         
@@ -60,6 +60,9 @@ def update_camera_readings(delta_R, delta_theta, stopEvent: mp.Event):
         if z < 0:
             delta_R.value = 0  # Signal DC motor to stop
             print("No marker detected.")
+            end_time = time.time()
+            duration = end_time - start_time
+            print(f'Camera code executed in {duration} seconds')
             continue
         
         y = -y  # 'estimate_coordinates' return y positive downwards, so recalibrate it with htis
@@ -75,20 +78,24 @@ def update_camera_readings(delta_R, delta_theta, stopEvent: mp.Event):
         
         print(delta_R.value)
         print(delta_theta.value)
-
-
-# def move_arm(stopEvent: mp.Event):
-    
-#     dcMotor = DCMotor(In1=17, In2=27, EN=18)
-    
-#     time.sleep(5)
-    
-#     while not stopEvent.is_set():
-#         dcMotor.forward(duration=0.5)
-#         dcMotor.backward(duration=0.5)  # FOR THE SAME 
         
-#     dcMotor.stop()
-#     GPIO.cleanup()
+        end_time = time.time()
+        duration = end_time - start_time
+        print(f'Camera code executed in {duration} seconds')
+
+
+def move_arm(stopEvent: mp.Event):
+    
+    dcMotor = DCMotor(In1=17, In2=27, EN=18)
+    
+    time.sleep(5)
+    
+    while not stopEvent.is_set():
+        dcMotor.forward(duration=1.5)
+        dcMotor.backward(duration=1.8)  # FOR THE SAME 
+        
+    dcMotor.stop()
+    GPIO.cleanup()
     
 
 # Only track radius changes for now
@@ -114,15 +121,17 @@ def balance_platform(pitch: mp.Value, stopEvent: mp.Event):
     
     time.sleep(5)
     
-    time_sleep = 0.0005 #don't change this
-    steps = 30
+    time_sleep = 0.0006 # This has been proved to be consistent
+    # steps = 1
     
     while not stopEvent.is_set():
-        if pitch.value >=0:
-            Leadscrew.spin(steps=steps, sleep_time=time_sleep, clockwise=False)  # Extends to increase pitch
-        else:
-            Leadscrew.spin(steps=steps, sleep_time=time_sleep, clockwise=True)  # Retracts to reduce pitch
-        time.sleep(0.1)
+        if pitch.value >= 2:  # Retracts
+            Leadscrew.single_spin(sleep_time=time_sleep, clockwise=False)
+            # Leadscrew.spin(steps=steps, sleep_time=time_sleep, clockwise=False)  # Retracts to reduce pitch
+        elif pitch.value <= -2:  # Extends
+            Leadscrew.single_spin(sleep_time=time_sleep, clockwise=True)
+            # Leadscrew.spin(steps=steps, sleep_time=time_sleep, clockwise=True)  # Extends to increase pitch
+        # time.sleep(time_sleep)
 
     GPIO.cleanup()
     
@@ -144,8 +153,8 @@ if __name__ == "__main__":
     processes = [
         mp.Process(target=update_IMU_readings, args=(yaw, pitch, alpha, stopEvent)),
         mp.Process(target=update_camera_readings, args=(delta_R, delta_theta, stopEvent)),
-        # mp.Process(target=move_arm, args=(stopEvent,)),
-        mp.Process(target=track_marker, args=(delta_R, delta_theta, stopEvent)),
+        mp.Process(target=move_arm, args=(stopEvent,)),
+        # mp.Process(target=track_marker, args=(delta_R, delta_theta, stopEvent)),
         mp.Process(target=balance_platform, args=(pitch, stopEvent))
     ]
 
