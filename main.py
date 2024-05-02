@@ -19,7 +19,7 @@ from HardwareComponents.Camera import RPiCamera
 from HardwareComponents.IMU import AdafruitBNO055
 from HardwareComponents.DCMotor import DCMotor
 from HardwareComponents.StepperMotor import BaseStepperMotor, LeadscrewStepperMotor
-from utility.decorators import time_this_func
+from utilities.decorators import time_this_func
 
 # FUNCTION WRAPPERS FOR DIFFERENT PROCESSES -----------------------------------
 def update_IMU_readings(yaw_deg, pitch_deg, arm_deg, stopEvent: mp.Event):
