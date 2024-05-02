@@ -15,6 +15,7 @@ import yaml
 from picamera import PiCamera
 from picamera.array import PiRGBArray
 # Project-Specific Imports
+from utilities.path_management import PROJECT_ROOT_PATH, LOGS_DIR
 from arucoRPi.arucoDict import ARUCO_DICT
 
 class RPiCamera(object):
@@ -48,11 +49,20 @@ class RPiCamera(object):
         
         time.sleep(2)  # For startup
         
-    def update_frame(self):
-        # Clear the buffer to frame
+    def _clear_frame_buffer(self):
+        """
+        Clear the PiRGBArray stored in self.frame. This is required between
+        updates of the frame attribute.
+        """
         self.frame.truncate(0)
         self.frame.seek(0)
-        # Capture an image and update it to "frame" attribute
+        
+    def update_frame(self):
+        """
+        Capture an image and store it in the frame attribute. This can be used
+        consecutively since the buffer is cleared in this function.
+        """
+        self._clear_frame_buffer()
         self.cam.capture(self.frame, format='bgr')
         
     def capture_and_save(self, save_path):
@@ -71,56 +81,74 @@ class RPiCamera(object):
             - More than one markers are detected
         """
         
+        self.frame.truncate(0)
+        self.frame.seek(0)
+        
         for frame in self.cam.capture_continuous(self.frame, format="bgr", use_video_port=True):
-            image = frame.array
-            gray_frame = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            
-            (corners, ids, rejected) = cv2.aruco.detectMarkers(image=gray_frame,
-                                                dictionary=self.arucoDict,
-                                                parameters=self.arucoParams)
-            
-            # If none or more than one arUco marker is detected, return -1
-            if not corners or ids.size > 1:
-                print("None/More than 1 marker(s) detected!")
-                x, y, z = -1
-                        
-            # Perform pose estimation
-            rVec, tVec, _ = cv2.aruco.estimatePoseSingleMarkers(
-                corners=corners, 
-                markerLength=self.MARKER_SIZE,
-                cameraMatrix=self.camMatrix,
-                distCoeffs=self.distCof
-            )
-            
-            x, y, z = tVec.flatten()
-            
-            # Save as a series of images
-            if log:
+            try: 
+                
+                image = frame.array
+                gray_frame = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+                
+                (corners, ids, rejected) = cv2.aruco.detectMarkers(image=gray_frame,
+                                                    dictionary=self.arucoDict,
+                                                    parameters=self.arucoParams)
+                
+                # If none or more than one arUco marker is detected, return -1
+                if not corners or ids.size > 1:
+                    print("None/More than 1 marker(s) detected!")
+                    x, y, z = (-1, -1, -1)
+                    self.frame.truncate(0)
+                    self.frame.seek(0)
+                    continue
+                            
+                # Perform pose estimation
+                rVec, tVec, _ = cv2.aruco.estimatePoseSingleMarkers(
+                    corners=corners, 
+                    markerLength=self.MARKER_SIZE,
+                    cameraMatrix=self.camMatrix,
+                    distCoeffs=self.distCof
+                )
                 print(rVec)
                 print(tVec)
-                topLeft, topRight, btmRight, btmLeft = corners.reshape((4, 2))
                 
-                # Draw lines on marker for visualisation
-                cv2.polylines(image, [corners.astype(np.int32)], isClosed=True,
-                              color=(0, 255, 255), thickness=3, 
-                              lineType=cv2.LINE_AA)
-                # Annotate Pose
-                cv2.drawFrameAxes(image, self.camMatrix, self.disCof, 
-                                  rVec, tVec, length=50, thickness=3)
-                # Annotate with coordinates
-                text = f"x = {np.round(x, 2)}, y = {np.round(y, 2)}, z = {np.round(z, 2)}"
-                cv2.putText(image, text, (10, image.shape[0] - 10), 
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2, cv2.LINE_AA)
-                # Save image as timestamp
-                timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S%f")
-                cv2.imwrite(f"frames/frame_{timestamp}.png", image)
+                x, y, z = tVec.flatten()
+                
+                # Save as a series of images
+                if log:
+                    
+                    # Draw lines on marker for visualisation
+                    cv2.polylines(image, [corners[0].astype(np.int32)], isClosed=True,
+                                color=(0, 255, 255), thickness=3, 
+                                lineType=cv2.LINE_AA)
+                    # Annotate Pose
+                    cv2.drawFrameAxes(image, self.camMatrix, self.distCof, 
+                                    rVec, tVec, length=50, thickness=3)
+                    # Annotate with coordinates
+                    text = f"x = {np.round(x, 2)}, y = {np.round(y, 2)}, z = {np.round(z, 2)}"
+                    cv2.putText(image, text, (10, image.shape[0] - 10), 
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2, cv2.LINE_AA)
+                    # Save image with a timestamp in its name
+                    timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S%f")
+                    cv2.imwrite(f"frames/frame_{timestamp}.png", image)
+                    self.output.write(image)
+                    
+                    self.frame.truncate(0)
+
+            except KeyboardInterrupt:
+                self.output.release()
+            finally:
+                self.output.release()
                 
             return x, y, z
             
-    def estimate_coordinates(self, log: bool = True):
+    def estimate_coordinates(self, log: bool = True, save_dir: Path = LOGS_DIR / "captured_images"):
         """
         Return the coordinates of ArUco marker (if any) relative to the centre
         of the frame. Return (-1, -1, -1) if no markers are detected.
+        
+        If `log` is set to true, save each frame as an image named after its 
+        timestamp under the directory `save_dir`.
         """
         image = self.frame.array
         gray_frame = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -130,7 +158,10 @@ class RPiCamera(object):
 
         # If none or more than one arUco marker is detected, return -1
         if not corners or (ids is not None and ids.size > 1):
-            print("None/More than 1 marker(s) detected!")
+            if not corners:
+                print("No marker detected")
+            else:
+                print("More than one marker detected")
             self.frame.truncate(0)
             self.frame.seek(0)
             return (-1, -1, -1)
@@ -158,9 +189,9 @@ class RPiCamera(object):
             text = f"x = {np.round(x, 2)}, y = {np.round(y, 2)}, z = {np.round(z, 2)}"
             cv2.putText(image, text, (10, image.shape[0] - 10), 
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2, cv2.LINE_AA)
-            # Save image as timestamp
+            # Save image with a timestamp in its name
             timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S%f")
-            cv2.imwrite(str(Path(__file__).parent / f"captured_image_t{timestamp}.png"), image)
+            cv2.imwrite(str(save_dir / f"captured_image_t{timestamp}.png"), image)
         
         return x, y, z
 
@@ -171,11 +202,9 @@ class RPiCamera(object):
 
     
 if __name__ == '__main__':
-    
-    project_root = Path(__file__).parent.parent
-    
-    calibration_path = Path(project_root, "arucoRPi/calibration.yaml").resolve()
-    save_path = Path(project_root, "logs/captured_images/captured_image.png").resolve()
+        
+    calibration_path = Path(PROJECT_ROOT_PATH, "arucoRPi/calibration.yaml").resolve()
+    save_path = Path(LOGS_DIR, "captured_images/captured_image.png").resolve()
     
     camera = RPiCamera(calibration_path)
     
@@ -187,4 +216,4 @@ if __name__ == '__main__':
             x, y, z = camera.estimate_coordinates()
         except KeyboardInterrupt:
             print("Terminated")
-            
+
