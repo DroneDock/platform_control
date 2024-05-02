@@ -7,6 +7,7 @@ actuator extends or retracts to level the platform using readings from the IMU.
 # Standard Imports
 import time
 import multiprocessing as mp
+import logging
 from multiprocessing import Queue
 from pathlib import Path
 
@@ -19,7 +20,8 @@ from HardwareComponents.Camera import RPiCamera
 from HardwareComponents.IMU import AdafruitBNO055
 from HardwareComponents.DCMotor import DCMotor
 from HardwareComponents.StepperMotor import BaseStepperMotor, LeadscrewStepperMotor
-from utilities.decorators import time_this_func
+#from utilities.decorators import time_this_func
+#from utilities.path_management import PROJECT_ROOT_PATH, LOGS_DIR
 from test.plotIMU import LoggerManager #Logger 
 
 # FUNCTION WRAPPERS FOR DIFFERENT PROCESSES -----------------------------------
@@ -28,17 +30,19 @@ def update_IMU_readings(yaw_deg, pitch_deg, arm_deg, stopEvent: mp.Event):
     Designed for multiprocessing, update the input angles in place with most
     recent IMU sensor readings.
     """
-    #File name to log data
-    log_file_path = Path(__file__).parent / 'logs/test1.log'
-
     top_IMU = AdafruitBNO055(ADR=True)
     arm_IMU = AdafruitBNO055()
-    
+
     while not stopEvent.is_set():
         try: #TODO: update values individually so None for one value does not affect others
             yaw_deg.value = top_IMU.eulerAngles[0]
             pitch_deg.value = top_IMU.eulerAngles[1]
             arm_deg.value = arm_IMU.eulerAngles[1]
+
+            #Logging data
+            logger_manager.log_yaw(yaw_deg.value)
+            logger_manager.log_pitch(pitch_deg.value)
+            logger_manager.log_arm(arm_deg.value)
         except TypeError:
             pass  # Skip update for one loop if sensor returns None
         
@@ -57,9 +61,10 @@ def update_camera_readings(delta_R, delta_theta, stopEvent: mp.Event):
         start_time = time.time()
         camera.update_frame()
         x, y, z = camera.estimate_coordinates(log=False)
-        
+        logger_manager.log_camera_position((x,y,z)) #logging
+
         print("Camera outputs are: ", x, y, z)
-        
+
         # Guard clause: when no marker is detected
         if z < 0:
             delta_R.value = 0  # Signal DC motor to stop
@@ -86,7 +91,6 @@ def update_camera_readings(delta_R, delta_theta, stopEvent: mp.Event):
         end_time = time.time()
         duration = end_time - start_time
         print(f'Camera code executed in {duration} seconds')
-
 
 def move_arm(stopEvent: mp.Event):
     
@@ -149,17 +153,21 @@ if __name__ == "__main__":
     alpha = mp.Value('f', 0.0)  # Store the arm angle
     delta_R = mp.Value('f', 0.0)  # Radial difference between centre of camera and marker
     delta_theta = mp.Value('f', 0.0)  # Yaw difference between centre of camera and marker
-    
+
+    #File name to log data
+    log_file_path = Path(__file__).parent / 'logs/test2.log'
+    logger_manager = LoggerManager(log_file_path)
+
     # Global Stop Event
     stopEvent = mp.Event()
-
+    something = 2
     # ===== Initiate processes =====
     processes = [
         mp.Process(target=update_IMU_readings, args=(yaw, pitch, alpha, stopEvent)),
         mp.Process(target=update_camera_readings, args=(delta_R, delta_theta, stopEvent)),
-        mp.Process(target=move_arm, args=(stopEvent,)),
-        # mp.Process(target=track_marker, args=(delta_R, delta_theta, stopEvent)),
-        mp.Process(target=balance_platform, args=(pitch, stopEvent))
+        #mp.Process(target=move_arm, args=(stopEvent,)),
+        #mp.Process(target=track_marker, args=(delta_R, delta_theta, stopEvent)),
+        #mp.Process(target=balance_platform, args=(pitch, stopEvent)),
     ]
 
     # Start the processes
@@ -173,6 +181,7 @@ if __name__ == "__main__":
 
     except KeyboardInterrupt:       
         print("Initializing stop event")
+        logger_manager.cleanup()
 
     # Ensure process resources are cleaned up
     finally:
@@ -180,3 +189,4 @@ if __name__ == "__main__":
         for p in processes:
             p.join()
         print("Program has ended gracefully.")
+        logging.error("Program terminated.")
