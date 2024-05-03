@@ -28,10 +28,10 @@ while True:
         key = input('Press W to go clockwise, press S to go anticlockwise: ')
 
         if key == 'w':  # Goes forward
-            dcMotor.forward(duration=1)
+            dcMotor.forward(dutyCycle=100, duration=1)  # dutyCycle can range from 20 to 100 for forward
 
         elif key == 's': # Goes backwards
-            dcMotor.backward(duration=1)
+            dcMotor.backward(dutyCycle=100, duration=1)  # dutyCycle can range from 80 to 100 for backward
 
         elif key == 'b':
             dcMotor.stop()

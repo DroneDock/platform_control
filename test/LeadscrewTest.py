@@ -21,7 +21,7 @@ Description: The leadscrew will extend and retract for a designated amount of ti
 ISSUE: Once the program finished running, it will go into idle buzzing.
 """
 lead_screw_pitch = 8 # mm
-time_sleep = 0.0006 # 0.0006 is found to be ideal - don't change this (For full stepping, use 0.0004 - 0.0007s)
+time_sleep = 0.0005 # 0.0005 to 0.0012 is found to be acceptable
 step = 200
 
 if __name__ == '__main__':
