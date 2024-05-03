@@ -47,7 +47,7 @@ def update_camera_readings(delta_x: mp.Value, delta_R: mp.Value, stopEvent: mp.E
     
     while not stopEvent.is_set():
         camera.update_frame()
-        x, y, z = camera.estimate_coordinates(log=False)
+        x, y, z = camera.estimate_coordinates(log=False, save_dir = LOGS_DIR / "Images" / "aruco_tracking")
         
         # Guard clause: when no marker is detected
         if (x == y == z == -1):
@@ -75,10 +75,10 @@ def forward_tracking(delta_R: mp.Value, stopEvent: mp.Event):
         # The convention is R is positive forward
         if delta_R.value > CAMERA_OFFSET_THRESHOLD:
             print("----- DC Motor ----- : Going forward")
-            dcMotor.forward()
+            dcMotor.forward(dutyCycle=100)
         elif delta_R.value < (-1 * CAMERA_OFFSET_THRESHOLD):
             print("----- DC Motor ----- : Going backwards")
-            dcMotor.backward()
+            dcMotor.backward(dutyCycle=100)
         else:
             print("----- DC Motor ----- : Stop")
             dcMotor.stop()      
@@ -98,10 +98,10 @@ def side_tracking(delta_x: mp.Value, stopEvent: mp.Event):
         # The convention is x is positive clockwise
         if delta_x.value > CAMERA_OFFSET_THRESHOLD:
             print("----- Base Motor ----- : Going clockwise")
-            baseMotor.spin(steps=10, sleep_time=0.0005, clockwise=True)
+            baseMotor.spin(steps=10, sleep_time=0.0002, clockwise=True)
         elif delta_x.value < (-1 * CAMERA_OFFSET_THRESHOLD):
             print("----- Base Motor ----- : Going anticlockwise")
-            baseMotor.spin(steps=10, sleep_time=0.0005, clockwise=False)
+            baseMotor.spin(steps=10, sleep_time=0.0002, clockwise=False)
         else:
             print("----- Base Motor ----- : Stop")
         
@@ -114,7 +114,7 @@ def balance_platform(pitch: mp.Value, stopEvent: mp.Event):
     
     time.sleep(5)
     
-    time_sleep = 0.0006 # This has been proved to be consistent
+    time_sleep = 0.0005 # This has been proved to be consistent
     # steps = 1
     
     while not stopEvent.is_set():
@@ -148,8 +148,8 @@ if __name__ == '__main__':
     processes = [
         mp.Process(target=update_IMU_readings, args=(yaw, pitch, alpha, stopEvent,)),
         mp.Process(target=update_camera_readings, args=(delta_x, delta_R, stopEvent,)),
-        mp.Process(target=forward_tracking, args=(delta_x, stopEvent,)),
-        mp.Process(target=side_tracking, args=(delta_R, stopEvent,)),
+        mp.Process(target=forward_tracking, args=(delta_R, stopEvent,)),
+        mp.Process(target=side_tracking, args=(delta_x, stopEvent,)),
         mp.Process(target=balance_platform, args=(pitch, stopEvent,))
     ]
     

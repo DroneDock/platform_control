@@ -6,7 +6,7 @@ import cv2
 # Project-Specific Imports
 from utilities.path_management import LOGS_DIR
 
-def images_to_video(input_dir: Path, output_path: Path, frame_rate: int = 5):
+def images_to_video(input_dir: Path, output_path: Path, frame_rate: int = 32):
     """
     Convert a series of images saved under input_dir to a video saved in
     output_path
@@ -34,5 +34,8 @@ def images_to_video(input_dir: Path, output_path: Path, frame_rate: int = 5):
     
 if __name__ == '__main__':
     
-    images_to_video(input_dir = LOGS_DIR / "Images", output_path= LOGS_DIR / "Videos" / "output_video.avi")
+    images_to_video(input_dir = LOGS_DIR / "Images" / "aruco_tracking", 
+                    output_path = LOGS_DIR / "Videos" / "aruco_tracking.avi")
     
+    # images_to_video(input_dir = LOGS_DIR / "Images" / "images_{timestamp}",
+    #                 output_path = LOGS_DIR / "Videos" / "timestamp.avi")
