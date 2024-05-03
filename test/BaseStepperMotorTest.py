@@ -28,7 +28,7 @@ Microstepping: 8
 Next step is making it react to ArUco
 """
 #classify steps
-time_sleep = 0.0005 #don't change this
+time_sleep = 0.0001 # 0.0001 to 0.0008 is found to be acceptable
 step = 1000
 
 if __name__ == "__main__":

@@ -31,6 +31,7 @@ class  DCMotor(object):
         """
 
         # Configure Pins
+        GPIO.setmode(GPIO.BCM)
         self._in1Pin = In1
         self._in2Pin = In2
         self._PWMPin = EN

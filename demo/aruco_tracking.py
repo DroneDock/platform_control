@@ -1,32 +1,22 @@
-"""
-The main program to be executed. So far, this is a program where the linear
-actuator extends or retracts to level the platform using readings from the IMU.
-"""
-
-
 # Standard Imports
 import time
-import multiprocessing as mp
-import logging
-from multiprocessing import Queue
+import multiprocessing as mp 
 from pathlib import Path
-
 # Third-Party Imports
 import numpy as np
 import RPi.GPIO as GPIO
-
-# Project Specific Imports
-from HardwareComponents.Camera import RPiCamera
+# Project-Specific Imports
+from utilities.path_management import PROJECT_ROOT_PATH, LOGS_DIR
 from HardwareComponents.IMU import AdafruitBNO055
+from HardwareComponents.Camera import RPiCamera
 from HardwareComponents.DCMotor import DCMotor
 from HardwareComponents.StepperMotor import BaseStepperMotor, LeadscrewStepperMotor
-from utilities.path_management import PROJECT_ROOT_PATH, LOGS_DIR
-from test.plotIMU import LoggerManager #Logger 
 
 # CONFIG CONSTANTS ------------------------------------------------------------
 CAMERA_OFFSET_THRESHOLD = 50  # [cm] the threshold within which the offset is deemed acceptable hence stop tracking
 
-# FUNCTION WRAPPERS FOR DIFFERENT PROCESSES -----------------------------------
+
+# Threads ---------------------------------------------------------------------
 def update_IMU_readings(yaw_deg, pitch_deg, arm_deg, stopEvent: mp.Event):
     """
     Designed for multiprocessing, update the input angles in place with most
@@ -41,17 +31,12 @@ def update_IMU_readings(yaw_deg, pitch_deg, arm_deg, stopEvent: mp.Event):
             pitch_deg.value = top_IMU.eulerAngles[1]
             arm_deg.value = arm_IMU.eulerAngles[1]
 
-            #Logging data
-            logger_manager.log_yaw(yaw_deg.value)
-            logger_manager.log_pitch(pitch_deg.value)
-            logger_manager.log_arm(arm_deg.value)
         except TypeError:
             pass  # Skip update for one loop if sensor returns None
         
         # print(f"Yaw: {yaw_deg.value}, Pitch: {pitch_deg.value}, Arm: {arm_deg.value}")
         time.sleep(0.05)
-    
-    
+
 def update_camera_readings(delta_x: mp.Value, delta_R: mp.Value, stopEvent: mp.Event):
     """
     Update camera readings into the R and theta variables in place.
@@ -75,8 +60,8 @@ def update_camera_readings(delta_x: mp.Value, delta_R: mp.Value, stopEvent: mp.E
         print("One marker detected!")
         delta_x.value = -x  # 'estimate_coordinates' return +ve x anti-clockwise. Calibrate it to +ve clockwise.
         delta_R.value = -y  # 'estimate_coordinates' return +ve y backward. Calibrate it to +ve forward.
-               
 
+        
 def forward_tracking(delta_R: mp.Value, stopEvent: mp.Event):
     """
     Actuate DC motors to track the aruco marker based on camera readings 
@@ -100,7 +85,6 @@ def forward_tracking(delta_R: mp.Value, stopEvent: mp.Event):
             
     dcMotor.stop()
     
-
 def side_tracking(delta_x: mp.Value, stopEvent: mp.Event):
     """
     Actuate base stepper motor to track the aruco marker based on camera
@@ -123,7 +107,7 @@ def side_tracking(delta_x: mp.Value, stopEvent: mp.Event):
         
     GPIO.cleanup()
 
-  
+
 def balance_platform(pitch: mp.Value, stopEvent: mp.Event):
     
     Leadscrew = LeadscrewStepperMotor(dir_pin=20, step_pin=21)
@@ -143,11 +127,10 @@ def balance_platform(pitch: mp.Value, stopEvent: mp.Event):
         # time.sleep(time_sleep)
 
     GPIO.cleanup()
+
+
+if __name__ == '__main__':
     
-
-# MAIN CODE -------------------------------------------------------------------
-if __name__ == "__main__":
-
     # ===== Parameter setup =====
     yaw = mp.Value('f', 0.0)      # Current yaw angle of the arm [deg]
     pitch = mp.Value('f', 0.0)    # Current pitch value of the platform [deg]
@@ -155,14 +138,10 @@ if __name__ == "__main__":
     delta_x = mp.Value('f', 0.0)  # Horizontal distance between camera and marker [cm]
     delta_R = mp.Value('f', 0.0)  # Vertical distance between camera and marker [cm]
 
-    # File name to log data
-    log_file_path = Path(__file__).parent / 'logs/main.log'
-    logger_manager = LoggerManager(log_file_path)
-
-    # Global Stop Event
+    # Global stop event
     stopEvent = mp.Event()
-
-    # ===== Initiate processes =====
+    
+    # ===== Initiate processses =====
     processes = [
         mp.Process(target=update_IMU_readings, args=(yaw, pitch, alpha, stopEvent,)),
         mp.Process(target=update_camera_readings, args=(delta_x, delta_R, stopEvent,)),
@@ -170,24 +149,20 @@ if __name__ == "__main__":
         mp.Process(target=side_tracking, args=(delta_x, stopEvent,)),
         mp.Process(target=balance_platform, args=(pitch, stopEvent,))
     ]
-
-    # Start the processes
+    
     for p in processes:
         p.start()
-
-    # Wait indefinitely until program is terminated
+        
     try:
         while True:
             time.sleep(0.1)
-
-    except KeyboardInterrupt:       
-        print("Initializing stop event")
-        logger_manager.cleanup()
-
-    # Ensure process resources are cleaned up
+            
+    except KeyboardInterrupt:
+        print("Inititalizing stop event")
+    
     finally:
-        stopEvent.set() 
+        stopEvent.set()
         for p in processes:
             p.join()
-        print("Program has ended gracefully.")
-        logging.error("Program terminated.")
+        print("Program has been terminated gracefully.")
+                   
