@@ -211,6 +211,7 @@ class LeadscrewStepperMotor(object):
         # Configure Pins
         GPIO.setup(dir_pin, GPIO.OUT)
         GPIO.setup(step_pin, GPIO.OUT)
+        time.sleep(1)
 
 
     def spin(self, steps, sleep_time, clockwise=True):
