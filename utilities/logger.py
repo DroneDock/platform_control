@@ -2,6 +2,18 @@ import logging
 from pathlib import Path
 
 class LoggerManager:
+    """
+    The project-wide class for logging purposes, designed to log sensor data
+    pertaining to the project.
+    
+    Currently supported data are:
+    1. Yaw Angle (float)
+    2. Pitch angle (float)
+    3. Arm Angle
+    4. Camera Position
+    5. Ultrasonic Distance
+    """
+
     def __init__(self, log_file_path):
         self.log_file_path = log_file_path
         self._setup_logging()
@@ -28,41 +40,12 @@ class LoggerManager:
     def log_arm(self, alpha):
         self.logger_arm.info(alpha)
 
-    def log_camera_position(self, position):
-        self.logger_camera.info(position)
-        
+    def log_camera_position(self, x, y, z):
+        self.logger_camera.info(f"X: {x}, Y: {y}, Z: {z}")
+
     def log_ultrasonic_distance(self, height):
         self.logger_ultrasonic.info(height)
 
     def cleanup(self):
         logging.info("Successful Cleanup")
-
-#Test to log a simple file
-if __name__ == '__main__':
-    # Standard Imports
-    import time
-
-    # File Management
-    log_file_path = Path(__file__).parent.parent / 'logs/test1.log'
-
-    logger_manager = LoggerManager(log_file_path)
-
-    try:
-        while True:
-            # Sample data
-            yaw = 45
-            pitch = 30
-            alpha = 60
-            position = (10, 20)
-
-            # Logging
-            logger_manager.log_yaw(yaw)
-            logger_manager.log_pitch(pitch)
-            logger_manager.log_arm(alpha)
-            logger_manager.log_camera_position(position)
-
-            time.sleep(1)  # For demonstration, wait for 1 second between readings
-    except KeyboardInterrupt:
-        logging.error("Program terminated via keyboard.")
-    finally:
-        logger_manager.cleanup()
+        logging.shutdown()
