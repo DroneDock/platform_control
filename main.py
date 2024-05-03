@@ -20,9 +20,11 @@ from HardwareComponents.Camera import RPiCamera
 from HardwareComponents.IMU import AdafruitBNO055
 from HardwareComponents.DCMotor import DCMotor
 from HardwareComponents.StepperMotor import BaseStepperMotor, LeadscrewStepperMotor
-#from utilities.decorators import time_this_func
-#from utilities.path_management import PROJECT_ROOT_PATH, LOGS_DIR
+from utilities.path_management import PROJECT_ROOT_PATH, LOGS_DIR
 from test.plotIMU import LoggerManager #Logger 
+
+# CONFIG CONSTANTS ------------------------------------------------------------
+CAMERA_OFFSET_THRESHOLD = 50  # [cm] the threshold within which the offset is deemed acceptable hence stop tracking
 
 # FUNCTION WRAPPERS FOR DIFFERENT PROCESSES -----------------------------------
 def update_IMU_readings(yaw_deg, pitch_deg, arm_deg, stopEvent: mp.Event):
@@ -50,93 +52,92 @@ def update_IMU_readings(yaw_deg, pitch_deg, arm_deg, stopEvent: mp.Event):
         time.sleep(0.05)
     
     
-def update_camera_readings(delta_R, delta_theta, stopEvent: mp.Event):
+def update_camera_readings(delta_x: mp.Value, delta_R: mp.Value, stopEvent: mp.Event):
     """
     Update camera readings into the R and theta variables in place.
     """
     
-    camera = RPiCamera(calibration_path=Path(__file__).parent / "arucoRPi/calibration.yaml")
+    calibration_path = Path(PROJECT_ROOT_PATH, "arucoRPi/calibration.yaml")
+    camera = RPiCamera(str(calibration_path))
     
     while not stopEvent.is_set():
-        start_time = time.time()
         camera.update_frame()
-        x, y, z = camera.estimate_coordinates(log=False)
-        logger_manager.log_camera_position((x,y,z)) #logging
-
-        print("Camera outputs are: ", x, y, z)
-
+        x, y, z = camera.estimate_coordinates(log=False, save_dir = LOGS_DIR / "Images" / "aruco_tracking")
+        
         # Guard clause: when no marker is detected
-        if z < 0:
+        if (x == y == z == -1):
+            delta_x.value = 0  # Signal Base Stepper to stop
             delta_R.value = 0  # Signal DC motor to stop
             print("No marker detected.")
-            end_time = time.time()
-            duration = end_time - start_time
-            print(f'Camera code executed in {duration} seconds')
             continue
         
-        y = -y  # 'estimate_coordinates' return y positive downwards, so recalibrate it with htis
-        
-        r = np.sqrt(x**2 + y**2)
-        theta = np.arctan2(y, x)
-        
-        # When angle is lower than zero, the marker is located at third or fourth
-        # quadrant, so a retraction is required.
-        if theta < 0:
-            delta_R.value = -r
-        delta_theta.value = theta
-        
-        print(delta_R.value)
-        print(delta_theta.value)
-        
-        end_time = time.time()
-        duration = end_time - start_time
-        print(f'Camera code executed in {duration} seconds')
+        # Setting values
+        print("One marker detected!")
+        delta_x.value = -x  # 'estimate_coordinates' return +ve x anti-clockwise. Calibrate it to +ve clockwise.
+        delta_R.value = -y  # 'estimate_coordinates' return +ve y backward. Calibrate it to +ve forward.
+               
 
-def move_arm(stopEvent: mp.Event):
-    
+def forward_tracking(delta_R: mp.Value, stopEvent: mp.Event):
+    """
+    Actuate DC motors to track the aruco marker based on camera readings 
+    provided by thread `update_camera_readings`
+    """    
     dcMotor = DCMotor(In1=17, In2=27, EN=18)
-    
-    time.sleep(5)
+    time.sleep(3)  # For motor to warmup
     
     while not stopEvent.is_set():
-        dcMotor.forward(duration=1.5)
-        dcMotor.backward(duration=1.8)  # FOR THE SAME 
         
+        # The convention is R is positive forward
+        if delta_R.value > CAMERA_OFFSET_THRESHOLD:
+            print("----- DC Motor ----- : Going forward")
+            dcMotor.forward(dutyCycle=100)
+        elif delta_R.value < (-1 * CAMERA_OFFSET_THRESHOLD):
+            print("----- DC Motor ----- : Going backwards")
+            dcMotor.backward(dutyCycle=100)
+        else:
+            print("----- DC Motor ----- : Stop")
+            dcMotor.stop()      
+            
     dcMotor.stop()
-    GPIO.cleanup()
     
 
-# Only track radius changes for now
-def track_marker(delta_R, delta_theta, stopEvent: mp.Event):
-    
-    dcMotor = DCMotor(In1=17, In2=27, EN=18)
-    time.sleep(5)
+def side_tracking(delta_x: mp.Value, stopEvent: mp.Event):
+    """
+    Actuate base stepper motor to track the aruco marker based on camera
+    readings provided by thread 'update_camera_readings'
+    """
+    baseMotor = BaseStepperMotor() 
+    time.sleep(3)  # For motor to warmup
     
     while not stopEvent.is_set():
-        if delta_R > 0:  # Require extension
-            dcMotor.forward(duration=0.1)
-        elif delta_R < 0:  # Require retraction
-            dcMotor.backward(duration=0.1)
-        else:  # Stop the motor (happens when no marker detected)
-            dcMotor.stop()
-
-    dcMotor.stop()
-    GPIO.cleanup()
         
+        # The convention is x is positive clockwise
+        if delta_x.value > CAMERA_OFFSET_THRESHOLD:
+            print("----- Base Motor ----- : Going clockwise")
+            baseMotor.spin(steps=10, sleep_time=0.0002, clockwise=True)
+        elif delta_x.value < (-1 * CAMERA_OFFSET_THRESHOLD):
+            print("----- Base Motor ----- : Going anticlockwise")
+            baseMotor.spin(steps=10, sleep_time=0.0002, clockwise=False)
+        else:
+            print("----- Base Motor ----- : Stop")
+        
+    GPIO.cleanup()
+
+  
 def balance_platform(pitch: mp.Value, stopEvent: mp.Event):
     
     Leadscrew = LeadscrewStepperMotor(dir_pin=20, step_pin=21)
     
     time.sleep(5)
     
-    time_sleep = 0.0006 # This has been proved to be consistent
+    time_sleep = 0.0005 # This has been proved to be consistent
     # steps = 1
     
     while not stopEvent.is_set():
-        if pitch.value >= 2:  # Retracts
+        if pitch.value >= 4:  # Retracts
             Leadscrew.single_spin(sleep_time=time_sleep, clockwise=False)
             # Leadscrew.spin(steps=steps, sleep_time=time_sleep, clockwise=False)  # Retracts to reduce pitch
-        elif pitch.value <= -2:  # Extends
+        elif pitch.value <= -4:  # Extends
             Leadscrew.single_spin(sleep_time=time_sleep, clockwise=True)
             # Leadscrew.spin(steps=steps, sleep_time=time_sleep, clockwise=True)  # Extends to increase pitch
         # time.sleep(time_sleep)
@@ -147,15 +148,15 @@ def balance_platform(pitch: mp.Value, stopEvent: mp.Event):
 # MAIN CODE -------------------------------------------------------------------
 if __name__ == "__main__":
 
-    # ===== Initial Setup =====
-    yaw = mp.Value('f', 0.0)    # Store yaw angle of platform
-    pitch = mp.Value('f', 0.0)  # Store the pitch angle of platform (for balancing purposes)
-    alpha = mp.Value('f', 0.0)  # Store the arm angle
-    delta_R = mp.Value('f', 0.0)  # Radial difference between centre of camera and marker
-    delta_theta = mp.Value('f', 0.0)  # Yaw difference between centre of camera and marker
+    # ===== Parameter setup =====
+    yaw = mp.Value('f', 0.0)      # Current yaw angle of the arm [deg]
+    pitch = mp.Value('f', 0.0)    # Current pitch value of the platform [deg]
+    alpha = mp.Value('f', 0.0)    # Current arm angle [deg]
+    delta_x = mp.Value('f', 0.0)  # Horizontal distance between camera and marker [cm]
+    delta_R = mp.Value('f', 0.0)  # Vertical distance between camera and marker [cm]
 
-    #File name to log data
-    log_file_path = Path(__file__).parent / 'logs/test2.log'
+    # File name to log data
+    log_file_path = Path(__file__).parent / 'logs/main.log'
     logger_manager = LoggerManager(log_file_path)
 
     # Global Stop Event
@@ -163,11 +164,11 @@ if __name__ == "__main__":
 
     # ===== Initiate processes =====
     processes = [
-        mp.Process(target=update_IMU_readings, args=(yaw, pitch, alpha, stopEvent)),
-        mp.Process(target=update_camera_readings, args=(delta_R, delta_theta, stopEvent)),
-        mp.Process(target=move_arm, args=(stopEvent,)),
-        #mp.Process(target=track_marker, args=(delta_R, delta_theta, stopEvent)),
-        mp.Process(target=balance_platform, args=(pitch, stopEvent)),
+        mp.Process(target=update_IMU_readings, args=(yaw, pitch, alpha, stopEvent,)),
+        mp.Process(target=update_camera_readings, args=(delta_x, delta_R, stopEvent,)),
+        mp.Process(target=forward_tracking, args=(delta_R, stopEvent,)),
+        mp.Process(target=side_tracking, args=(delta_x, stopEvent,)),
+        mp.Process(target=balance_platform, args=(pitch, stopEvent,))
     ]
 
     # Start the processes

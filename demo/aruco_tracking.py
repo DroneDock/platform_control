@@ -60,7 +60,7 @@ def update_camera_readings(delta_x: mp.Value, delta_R: mp.Value, stopEvent: mp.E
         print("One marker detected!")
         delta_x.value = -x  # 'estimate_coordinates' return +ve x anti-clockwise. Calibrate it to +ve clockwise.
         delta_R.value = -y  # 'estimate_coordinates' return +ve y backward. Calibrate it to +ve forward.
-                
+
         
 def forward_tracking(delta_R: mp.Value, stopEvent: mp.Event):
     """
@@ -137,9 +137,6 @@ if __name__ == '__main__':
     alpha = mp.Value('f', 0.0)    # Current arm angle [deg]
     delta_x = mp.Value('f', 0.0)  # Horizontal distance between camera and marker [cm]
     delta_R = mp.Value('f', 0.0)  # Vertical distance between camera and marker [cm]
-    
-    # ===== Component setup =====
-    video_save_path = Path(LOGS_DIR, "videos/")
 
     # Global stop event
     stopEvent = mp.Event()

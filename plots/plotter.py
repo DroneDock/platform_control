@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 
 # Path to your log file
-log_file_path = Path(__file__).parent.parent / 'logs/IMU_readings.log'
+log_file_path = Path(__file__).parent.parent / 'logs/main.log'
 
 # Initialize lists to hold the parsed data
 timestamps_pitch = []
@@ -78,7 +78,7 @@ axes[1].plot(timestamps_pitch, readings_pitch, label='Pitch')
 axes[1].set_ylabel('Platform Pitch Angle [deg]')
 
 # Plot Arm readings
-axes[2].plot(timestamps_pitch, readings_pitch, label='IMU_2', color='orange')
+axes[2].plot(timestamps_pitch, readings_alpha, label='IMU_2', color='orange')
 axes[2].set_title('Arm IMU')
 axes[2].set_ylabel('Arm Angle [deg]')
 
