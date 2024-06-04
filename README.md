@@ -27,6 +27,10 @@ The main folders of the project are shown
 |       |----- path_management.py
 |
 |----- 📁 logs
+|
+|----- 📁 docs
+        |----- connections.docx
+        |----- raspberrypi_cv_setup.docx
 ```
 
 * 📁 **HardwareComponents** - Contain all the classes used to control the electronic components
@@ -35,6 +39,7 @@ The main folders of the project are shown
 combine multiple components working in tandem to achieve higher-level functionalities such as platform levelling.
 * 📁 **utilities** - Contain general tools (constants, functions and classes) to aid development, e.g, a file named `path_management.py` contains paths to the project root that can be referenced by other scripts.
 * 📁 **logs** - Contain all the logs and any collected data during run time.
+* 📁 **docs** - Contain the documentations for electrical connections of electrical components and the dependency status of OpenCV - which versions of OpenCV is compatible with Raspberry Pi.
 
 
 ## Setup
@@ -77,3 +82,5 @@ python test/IMU.py
 ```
 If there are readings shown, the connections are correct. If the output is I2C
 error, then there might be faulty connections.
+
+The connections are documented in the word document `docs/connections.docx`.
