@@ -61,8 +61,19 @@ following code in the project root.
 pip install -e .
 ```
 
-## Running the Program
+## Running the program
 To run the program, simply run the following command in the project root:
 ```code
 python main.py
 ```
+
+
+## Testing
+When developing or working on the project, the connections to individual
+components can be tested by running their respective scripts under 
+`HardwareComponents`. For example, to check if the IMU is working correctly:
+```
+python test/IMU.py
+```
+If there are readings shown, the connections are correct. If the output is I2C
+error, then there might be faulty connections.

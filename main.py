@@ -5,6 +5,7 @@ actuator extends or retracts to level the platform using readings from the IMU.
 
 
 # Standard Imports
+import argparse
 import time
 import multiprocessing as mp
 import logging
@@ -168,6 +169,11 @@ def turn_servo(height: mp.Value, stopEvent: mp.Event):
 
 # MAIN CODE -------------------------------------------------------------------
 if __name__ == "__main__":
+    # ===== Argument Parsing =====
+    parser = argparse.ArgumentParser(description="Platform detection and tracking script")
+    parser.add_argument('--log', type=str, default='logs/main.log', help='Log file path')
+    args = parser.parse_args()
+    
 
     # ===== Parameter setup =====
     yaw = mp.Value('f', 0.0)      # Current yaw angle of the arm [deg]
@@ -178,7 +184,7 @@ if __name__ == "__main__":
     height = mp.Value('f', 0.0)   # Distance measured by ultrasonic sensor
 
     # File name to log data
-    log_file_path = Path(__file__).parent / 'logs/main.log'
+    log_file_path = Path(args.log)
     logger_manager = LoggerManager(log_file_path)
 
     # Global Stop Event
