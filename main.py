@@ -90,6 +90,7 @@ def update_ultrasonic_height(height: mp.Value, stopEvent: mp.Event):
     
     while not stopEvent.is_set():
         distance = ultrasonicSensor.get_distance()
+        print(f"Got distance = {distance}")
         height.value = distance
         logger_manager.log_ultrasonic_distance(height.value)
         time.sleep(1)
@@ -156,13 +157,13 @@ def balance_platform(pitch: mp.Value, stopEvent: mp.Event):
 def turn_servo(height: mp.Value, stopEvent: mp.Event):
     
     servoMotor = ServoMotor()
-    servoMotor.set_angle(0)
+    servoMotor.set_angle(20)
     
     while not stopEvent.is_set():
-        if height.value < 3:
+        if height.value < 5:
             servoMotor.set_angle(90)
             time.sleep(1)
-            servoMotor.set_angle(0)
+            servoMotor.set_angle(20)
 
 
 # MAIN CODE -------------------------------------------------------------------

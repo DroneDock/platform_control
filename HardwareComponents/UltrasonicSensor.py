@@ -27,6 +27,8 @@ class UltrasonicSensor(object):
         # Wait for the echo to be received
         while GPIO.input(self.ECHO_PIN) == GPIO.LOW:
             pulse_start_time = time.time()
+            if (time.time() - pulse_start_time) > 3:
+                break
 
         while GPIO.input(self.ECHO_PIN) == GPIO.HIGH:
             pulse_end_time = time.time()

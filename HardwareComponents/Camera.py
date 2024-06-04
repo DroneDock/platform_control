@@ -41,7 +41,7 @@ class RPiCamera(object):
         self.cam.rotation = 0
         
         # Initialize ArUco marker properties
-        self.MARKER_SIZE = 60  # Square size [mm] - allow for pose and distance estimation
+        self.MARKER_SIZE = 30  # Square size [mm] - allow for pose and distance estimation
         self.arucoDict = cv2.aruco.Dictionary_get(ARUCO_DICT["DICT_6X6_50"])
         self.arucoParams = cv2.aruco.DetectorParameters_create()  # Use default parameters
         
@@ -147,7 +147,7 @@ class RPiCamera(object):
             except KeyboardInterrupt:
                 break
             
-    def _rotation_matrix_to_euler_angles(R):
+    def _rotation_matrix_to_euler_angles(self, R):
         """
         Return the Euler roll, pitch and yaw in degrees , which are the 
         rotations around the x, y and z axes respectively.

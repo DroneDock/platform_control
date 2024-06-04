@@ -31,9 +31,8 @@ def set_angle(angle):
     pwm.ChangeDutyCycle(0)
 
 if __name__ == "__main__":
-    set_angle(0)
-    time.sleep(1)
+    # set_angle(20)
 
-    # # Move servo to 90 degrees
-    # set_angle(90)
-    # time.sleep(1)
+    # Move servo to 90 degrees
+    set_angle(90)
+    time.sleep(1)

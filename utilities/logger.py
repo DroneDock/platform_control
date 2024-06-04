@@ -48,4 +48,3 @@ class LoggerManager:
 
     def cleanup(self):
         logging.info("Successful Cleanup")
-        logging.shutdown()
