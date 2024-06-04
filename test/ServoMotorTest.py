@@ -30,18 +30,9 @@ def set_angle(angle):
     GPIO.output(servo_pin, False)
     pwm.ChangeDutyCycle(0)
 
-try:
-    while True:
-        # Move servo to 0 degrees
-        set_angle(90)
-        time.sleep(1)
+if __name__ == "__main__":
+    # set_angle(20)
 
-        # Move servo to 90 degrees
-        #
-
-
-
-# Clean up GPIO on Ctrl+C exit
-except KeyboardInterrupt:
-    pwm.stop()
-    GPIO.cleanup()
+    # Move servo to 90 degrees
+    set_angle(90)
+    time.sleep(1)

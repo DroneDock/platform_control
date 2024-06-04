@@ -41,7 +41,7 @@ class RPiCamera(object):
         self.cam.rotation = 0
         
         # Initialize ArUco marker properties
-        self.MARKER_SIZE = 60  # Square size [mm] - allow for pose and distance estimation
+        self.MARKER_SIZE = 30  # Square size [mm] - allow for pose and distance estimation
         self.arucoDict = cv2.aruco.Dictionary_get(ARUCO_DICT["DICT_6X6_50"])
         self.arucoParams = cv2.aruco.DetectorParameters_create()  # Use default parameters
         
@@ -147,6 +147,27 @@ class RPiCamera(object):
             except KeyboardInterrupt:
                 break
             
+    def _rotation_matrix_to_euler_angles(self, R):
+        """
+        Return the Euler roll, pitch and yaw in degrees , which are the 
+        rotations around the x, y and z axes respectively.
+        
+        Note: Assumes the rotation matrix uses the rotation sequence z-y-x
+        """
+        sy = np.sqrt(R[0,0] * R[0,0] + R[1,0] * R[1,0])
+        singular = sy < 1e-6
+        if not singular:
+            x = np.arctan2(R[2,1], R[2,2])
+            y = np.arctan2(-R[2,0], sy)
+            z = np.arctan2(R[1,0], R[0,0])
+        else:
+            x = np.arctan2(-R[1,2], R[1,1])
+            y = np.arctan2(-R[2,0], sy)
+            z = 0
+
+        return np.degrees(x), np.degrees(y), np.degrees(z)
+        
+            
     def estimate_coordinates(self, log: bool = False, save_dir: Path = LOGS_DIR / "Images"):
         """
         Return the coordinates of ArUco marker (if any) relative to the centre
@@ -155,14 +176,11 @@ class RPiCamera(object):
         If `log` is set to true, save each frame as an image named after its 
         timestamp under the directory `save_dir`. 
         """
-        start_time = time.time()
         image = self.frame.array
         gray_frame = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         (corners, ids, rejected) = cv2.aruco.detectMarkers(image=gray_frame,
                                             dictionary=self.arucoDict,
                                             parameters=self.arucoParams)
-        aruco_detection_time = time.time()
-        print(f"Detecting aruco took {aruco_detection_time - start_time}")
 
         # If none or more than one arUco marker is detected, return -1
         if not corners or (ids is not None and ids.size > 1):
@@ -181,17 +199,18 @@ class RPiCamera(object):
             return (-1, -1, -1)
                     
         # Perform pose estimation
-        start_time = time.time()
         rVec, tVec, _ = cv2.aruco.estimatePoseSingleMarkers(
             corners=corners, 
             markerLength=self.MARKER_SIZE,
             cameraMatrix=self.camMatrix,
             distCoeffs=self.distCof
         )
-        pose_estimate_time = time.time()
-        print(f"Pose estimation took {pose_estimate_time-start_time}")
-        
+        # Save results 
         print("Marker detected")
+        rotation_matrix, _ = cv2.Rodrigues(rVec[0][0])  # rVec is naturally a nested matrix, hence the subscript [0][0]
+        roll, pitch, yaw = self._rotation_matrix_to_euler_angles(rotation_matrix)
+        print(f"The pitch of the marker is {roll}")
+
         x, y, z = tVec.flatten()
         
         # Save the series of images
@@ -207,6 +226,9 @@ class RPiCamera(object):
             text = f"x = {np.round(x, 2)}, y = {np.round(y, 2)}, z = {np.round(z, 2)}"
             cv2.putText(image, text, (10, image.shape[0] - 10), 
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2, cv2.LINE_AA)
+            text2 = f"Roll = ({np.round(roll, 2)}, Pitch = {np.round(pitch, 2)}, Yaw = {np.round(yaw, 2)},)"
+            cv2.putText(image, text2, (10, image.shape[0] - 30), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2, cv2.LINE_AA)
             # Save the frame in a folder named after its timestamp. Create if not yet exist
             save_dir.mkdir(parents=True, exist_ok=True)
             timestamp = datetime.datetime.now().strftime("%Y%m%d-%H-%M-%S-%f")
@@ -232,10 +254,7 @@ if __name__ == '__main__':
     
     while True:
         try:
-            start_time = time.time()
             camera.update_frame()
-            capture_time = time.time()
-            print(f"Capturing takes {capture_time - start_time}")
             x, y, z = camera.estimate_coordinates(log=True, save_dir=save_directory,)
             
         except KeyboardInterrupt:

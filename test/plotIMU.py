@@ -17,6 +17,7 @@ class LoggerManager:
         self.logger_pitch = logging.getLogger('Pitch Angle')
         self.logger_arm = logging.getLogger('Arm Angle')
         self.logger_camera = logging.getLogger('Camera Position')
+        self.logger_ultrasonic = logging.getLogger('Ultrasonic Distance')
 
     def log_yaw(self, yaw):
         self.logger_yaw.info(yaw)
@@ -29,6 +30,9 @@ class LoggerManager:
 
     def log_camera_position(self, position):
         self.logger_camera.info(position)
+        
+    def log_ultrasonic_distance(self, height):
+        self.logger_ultrasonic.info(height)
 
     def cleanup(self):
         logging.info("Successful Cleanup")
