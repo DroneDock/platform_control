@@ -11,20 +11,17 @@ The main folders of the project are shown
 |       |----- Relay.py
 |       |----- IMU.py
 |       |----- StepperMotor.py
+|       |----- ...
 |
 |----- 📁 test
 |       |----- BaseStepperMotorTest.py
 |       |----- DCMotorTest.py
 |       |----- ...
 |
-|----- 📁 demo
-|       |----- platform_levelling.py
-|       |----- aruco_tracking.py
-|       |----- turn_all_components.py
-|
 |----- 📁 utilities
-|       |----- decorators.py
+|       |----- logger.py
 |       |----- path_management.py
+|       |----- video_processing.py
 |
 |----- 📁 logs
 |
